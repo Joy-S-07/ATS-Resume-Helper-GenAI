@@ -11,20 +11,20 @@ const jwt = require("jsonwebtoken")
 async function registerUserController(req, res) {
     const { username, email, password } = req.body;
 
-    if(!username || !email || !password){
+    if (!username || !email || !password) {
         return res.status(400).json({
             message: "All fields are required"
         });
-    } 
+    }
 
     const isUserAlreadyExists = await userModel.findOne({
         $or: [
-            {username},
-            {email}
+            { username },
+            { email }
         ]
     })
 
-    if(isUserAlreadyExists){
+    if (isUserAlreadyExists) {
         return res.status(400).json({
             message: "User already exists"
         })
@@ -38,7 +38,7 @@ async function registerUserController(req, res) {
         password: hash
     });
 
-    const token = jwt.sign (
+    const token = jwt.sign(
         { id: user._id, username: user.username, email: user.email },
         process.env.JWT_SECRET,
         { expiresIn: "1d" }
@@ -48,7 +48,7 @@ async function registerUserController(req, res) {
 
     res.status(201).json({
         message: "User registered successfully",
-        user:{
+        user: {
             id: user._id,
             username: user.username,
             email: user.email
@@ -62,11 +62,11 @@ async function registerUserController(req, res) {
  * @description Login a user, expects username and password from req.body
  * @access Public
  */
-async function loginUserController(req, res){
-    const {email, password} = req.body;
+async function loginUserController(req, res) {
+    const { email, password } = req.body;
 
-    const user = await userModel.findOne({email});
-    if(!user) {
+    const user = await userModel.findOne({ email });
+    if (!user) {
         return res.status(401).json({
             message: "Invalid email or password"
         })
@@ -74,12 +74,12 @@ async function loginUserController(req, res){
 
     const isPasswordValid = await bcrypt.compare(password, user.password)
 
-    if(!isPasswordValid) {
+    if (!isPasswordValid) {
         return res.status(400).json({
             message: "Invalid email or password"
         })
     }
-    
+
     const token = jwt.sign(
         { id: user._id, username: user.username },
         process.env.JWT_SECRET,
