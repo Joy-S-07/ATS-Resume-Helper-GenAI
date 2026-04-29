@@ -1,6 +1,7 @@
 const { Router } = require("express")
 const authRouter = Router()
 const authController = require("../controllers/auth.controller")
+const authMiddleware = require("../../middlewares/auth.middleware")
 
 /**
  * @route POST /api/auth/register
@@ -28,6 +29,6 @@ authRouter.get("/logout", authController.logoutUserController)
  * @description Get current logged in user
  * @access Private
  */
-authRouter.get("/get-me", authController.getMeController)
+authRouter.get("/get-me", authMiddleware.authUser, authController.getMeController)
 
 module.exports = authRouter
