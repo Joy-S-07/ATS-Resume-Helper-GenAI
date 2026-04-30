@@ -1,28 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, Navigate } from "react-router";
+import { Link } from "react-router";
 import { useAuth } from "../hooks/useAuth";
-import "./style.scss";
-import { useNavigate } from "react-router";
-
-
-// const Login = () => {
-
-//     const { loading, handleLogin } = useAuth()
-//     const navigate = useNavigate()
-
-//     const [email, setEmail] = useState("")
-//     const [password, setPassword] = useState("")
-
-//     const handleSubmit = async (e) => {
-//         e.preventDefault()
-//         await handleLogin({ email, password })
-//         navigate('/')
-//     }
-
-//     if (loading) {
-//         return (<main><h1>Loading.......</h1></main>)
-//     }
-// }
 
 // ── Animated background ──────────────────────────────────────────────────────
 function AnimatedBg() {
@@ -74,97 +52,11 @@ function AnimatedBg() {
     );
 }
 
-// ── Score ring ───────────────────────────────────────────────────────────────
-function ScoreRing({ score, label, color, delay = 0 }) {
-    const [animated, setAnimated] = useState(false);
-    const r = 28;
-    const circumference = 2 * Math.PI * r;
-    const offset = circumference - (circumference * score) / 100;
-
-    useEffect(() => {
-        const t = setTimeout(() => setAnimated(true), delay + 400);
-        return () => clearTimeout(t);
-    }, [delay]);
-
-    return (
-        <div className="text-center">
-            <div className="relative inline-block" style={{ width: 72, height: 72 }}>
-                <svg width="72" height="72" style={{ transform: "rotate(-90deg)" }}>
-                    <circle
-                        cx="36" cy="36" r={r}
-                        fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="5"
-                    />
-                    <circle
-                        cx="36" cy="36" r={r}
-                        fill="none"
-                        stroke={color}
-                        strokeWidth="5"
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={animated ? offset : circumference}
-                        style={{
-                            transition: `stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1) ${delay}ms`,
-                            transformOrigin: "center",
-                            transform: "rotate(-90deg)",
-                        }}
-                    />
-                </svg>
-                <div
-                    className="absolute inset-0 flex items-center justify-center"
-                    style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, color: "#fff" }}
-                >
-                    {animated ? score : 0}
-                </div>
-            </div>
-            <div className="mt-1.5 text-[11px] text-white/50">{label}</div>
-        </div>
-    );
-}
-
-// ── Scan animation ───────────────────────────────────────────────────────────
-function ScanAnimation() {
-    const items = ["Keyword density", "Section headers", "Contact info", "Skills match", "Format check"];
-    return (
-        <div className="relative w-full rounded-xl overflow-hidden border border-white/[0.06]"
-            style={{ height: 160, background: "rgba(255,255,255,0.03)" }}>
-            <div
-                className="absolute top-0 left-0 right-0 h-[2px]"
-                style={{
-                    background: "linear-gradient(90deg,transparent,#6c63ff,transparent)",
-                    animation: "scan 2s linear infinite",
-                }}
-            />
-            {items.map((item, i) => (
-                <div
-                    key={i}
-                    className="flex items-center px-3.5 py-2.5 border-b border-white/[0.04]"
-                >
-                    <div
-                        className="w-1.5 h-1.5 rounded-full mr-2.5 shrink-0"
-                        style={{
-                            background: i < 3 ? "#22c55e" : "rgba(255,255,255,0.2)",
-                            boxShadow: i < 3 ? "0 0 8px rgba(34,197,94,0.7)" : "none",
-                        }}
-                    />
-                    <span
-                        className="text-[12px] flex-1"
-                        style={{ color: i < 3 ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.3)" }}
-                    >
-                        {item}
-                    </span>
-                    {i < 3 && (
-                        <span className="text-[11px] text-green-400 font-semibold">✓</span>
-                    )}
-                </div>
-            ))}
-        </div>
-    );
-}
-
-// ── Main Login Page ──────────────────────────────────────────────────────────
-export default function LoginPage() {
+// ── Main Register Page ──────────────────────────────────────────────────────────
+export default function RegisterPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [name, setName] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPass, setShowPass] = useState(false);
     const [visible, setVisible] = useState(false);
@@ -178,13 +70,29 @@ export default function LoginPage() {
         setLoading(true);
         // TODO: wire up your auth here
         setTimeout(() => setLoading(false), 2000);
-        handleLogin({ email, password })
-        Navigate('/')
     };
 
     return (
         <>
             {/* Keyframes injected once */}
+            <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+        @keyframes float1  { 0%,100%{transform:translateY(0) rotate(0deg);}  50%{transform:translateY(-20px) rotate(5deg);} }
+        @keyframes float2  { 0%,100%{transform:translateY(0) rotate(0deg);}  50%{transform:translateY(-30px) rotate(-8deg);} }
+        @keyframes float3  { 0%,100%{transform:translateY(0);}              50%{transform:translateY(-15px);} }
+        @keyframes scan    { 0%{top:0%;}  100%{top:100%;} }
+        @keyframes pulse-ring { 0%{transform:scale(0.8);opacity:1;} 100%{transform:scale(2.5);opacity:0;} }
+        @keyframes gradient-shift { 0%,100%{background-position:0% 50%;} 50%{background-position:100% 50%;} }
+        @keyframes shimmer { 0%{left:-100%;} 100%{left:200%;} }
+        @keyframes slide-up { from{opacity:0;transform:translateY(32px);} to{opacity:1;transform:translateY(0);} }
+        .btn-primary { animation: gradient-shift 3s ease infinite; }
+        .btn-primary::after {
+          content:''; position:absolute; top:0; left:-100%;
+          width:60%; height:100%;
+          background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+          animation: shimmer 2.5s infinite;
+        }
+      `}</style>
 
             <div className="min-h-screen flex items-center justify-center p-6 relative z-10 bg-[#0a0a0f]">
                 <AnimatedBg />
@@ -248,6 +156,21 @@ export default function LoginPage() {
                         >
                             {/* Tabs */}
                             <div className="flex p-1 rounded-xl mb-7" style={{ background: "rgba(255,255,255,0.05)", padding: "4px" }}>
+                                <Link
+                                    to="/login"
+                                    className="flex-1 rounded-lg text-sm font-medium transition-all duration-200 text-center"
+                                    style={{
+                                        padding: "10px 0",
+                                        background: "transparent",
+                                        color: "rgba(255,255,255,0.5)",
+                                        border: "none",
+                                        cursor: "pointer",
+                                        fontFamily: "'DM Sans', sans-serif",
+                                        textDecoration: "none",
+                                    }}
+                                >
+                                    Sign In
+                                </Link>
                                 <div
                                     className="flex-1 rounded-lg text-sm font-medium transition-all duration-200 text-center"
                                     style={{
@@ -258,33 +181,17 @@ export default function LoginPage() {
                                         fontFamily: "'DM Sans', sans-serif",
                                     }}
                                 >
-                                    Sign In
-                                </div>
-                                <Link
-                                    to="/register"
-                                    className="flex-1 rounded-lg text-sm font-medium transition-all duration-200 text-center"
-                                    style={{
-                                        padding: "10px 0",
-                                        background: "transparent",
-                                        color: "rgba(255,255,255,0.5)",
-                                        border: "none",
-                                        cursor: "pointer",
-                                        fontFamily: "'DM Sans', sans-serif",
-                                        textDecoration: "none"
-                                    }}
-                                >
                                     Create Account
-                                </Link>
+                                </div>
                             </div>
-
 
                             {/* Heading */}
                             <div className="mb-6">
                                 <h2 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 24, color: "#fff", letterSpacing: "-0.5px", marginBottom: 4 }}>
-                                    Welcome back
+                                    Get started free
                                 </h2>
                                 <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
-                                    Sign in to your ResumeIQ account
+                                    Join 50,000+ job seekers using AI
                                 </p>
                             </div>
 
@@ -332,6 +239,16 @@ export default function LoginPage() {
                             {/* Form */}
                             <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 mt-2">
                                 <div>
+                                    <label className="block text-[13px] font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>Full Name</label>
+                                    <input
+                                        type="text" placeholder="Alex Johnson" value={name}
+                                        onChange={e => setName(e.target.value)} required
+                                        className="w-full rounded-xl text-[15px] text-white outline-none transition-all"
+                                        style={{ padding: "12px 16px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" }}
+                                    />
+                                </div>
+
+                                <div>
                                     <label className="block text-[13px] font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>Email Address</label>
                                     <input
                                         type="email" placeholder="you@example.com" value={email}
@@ -367,6 +284,14 @@ export default function LoginPage() {
                                     </div>
                                 </div>
 
+                                <div className="flex gap-2.5 p-3 rounded-xl" style={{ background: "rgba(108,99,255,0.08)", border: "1px solid rgba(108,99,255,0.2)" }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6c63ff" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                                        <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                                    </svg>
+                                    <span className="text-[12px] leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
+                                        Free plan includes 5 resume analyses/month & 1 AI-generated resume.
+                                    </span>
+                                </div>
 
                                 <button
                                     type="submit"
@@ -383,17 +308,17 @@ export default function LoginPage() {
                                     onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 30px rgba(108,99,255,0.5)"; }}
                                     onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
                                 >
-                                    {loading ? "Authenticating..." : "Sign In to ResumeIQ →"}
+                                    {loading ? "Authenticating..." : "Create Free Account →"}
                                 </button>
                             </form>
 
                             <p className="text-center mt-5 text-[13px]" style={{ color: "rgba(255,255,255,0.35)" }}>
-                                Don't have an account?{" "}
+                                Already have an account?{" "}
                                 <Link
-                                    to="/register"
+                                    to="/login"
                                     style={{ background: "none", border: "none", color: "rgba(108,99,255,0.9)", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500, textDecoration: "none" }}
                                 >
-                                    Sign up free
+                                    Sign in
                                 </Link>
                             </p>
 
