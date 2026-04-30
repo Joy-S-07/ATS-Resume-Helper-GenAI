@@ -220,7 +220,7 @@ export default function LoginPage() {
                             <h1 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 36, lineHeight: 1.1, color: "#fff", letterSpacing: "-1px", marginBottom: 12 }}>
                                 Land your dream job faster.
                             </h1>
-                            <p className="text-base" style={{ color: "rgba(255,255,255,0.7)" }}>
+                            <p className="text-base justify-between" style={{ color: "rgba(255,255,255,0.7)" }}>
                                 AI-powered ATS scoring and resume optimization.
                             </p>
                         </div>
@@ -378,7 +378,7 @@ export default function LoginPage() {
 
                                 <button
                                     type="submit"
-                                    className="btn-primary w-full py-3.5 rounded-xl font-bold text-base text-white relative overflow-hidden mt-3"
+                                    className="btn-primary w-full py-3.5 h-[45px] rounded-xl font-bold text-base text-white relative overflow-hidden mt-3"
                                     style={{
                                         fontFamily: "'Syne', sans-serif",
                                         background: "linear-gradient(135deg,#6c63ff,#a855f7,#ec4899)",
