@@ -7,62 +7,64 @@ export const useAuth = () => {
 
     const { user, setUser, loading, setLoading } = context;
 
-    const handleLogin = async ({ email , password }) => {
+    const handleLogin = async ({ email, password }) => {
         setLoading(true);
-        try{
-            const data = await login({ email , password })
-            setUser(data.user)
-            return true;
+        try {
+            const data = await login({ email, password });
+            setUser(data.user);
+            return { success: true };
+        } catch (error) {
+            const message = error?.response?.data?.message || "Login failed. Please try again.";
+            console.error("Login error:", message);
+            return { success: false, message };
+        } finally {
+            setLoading(false);
         }
-        catch (error){
-            console.error(error);
-            return false;
-        }
-        finally{
-            setLoading(false)
-        }
-    }
+    };
 
-    const handleRegister = async ({ email , password }) => {
+    const handleRegister = async ({ username, email, password }) => {
         setLoading(true);
-        try{
-            const data = await register({ email , password })
-            setUser(data.user)
+        try {
+            const data = await register({ username, email, password });
+            setUser(data.user);
+            return { success: true };
+        } catch (error) {
+            const message = error?.response?.data?.message || "Registration failed. Please try again.";
+            console.error("Register error:", message);
+            return { success: false, message };
+        } finally {
+            setLoading(false);
         }
-        catch (error){
-            toast.error(error.message)
-        }
-        finally{
-            setLoading(false)
-        }
-    }
+    };
 
     const handleLogout = async () => {
         setLoading(true);
-        try{
-            const data = await logout();
+        try {
+            await logout();
+            setUser(null);
+            return { success: true };
+        } catch (error) {
+            const message = error?.response?.data?.message || "Logout failed.";
+            console.error("Logout error:", message);
+            return { success: false, message };
+        } finally {
+            setLoading(false);
         }
-        catch (error){
-            toast.error(error.message)
-        }
-        finally{
-            setLoading(false)
-        }
-    }
+    };
 
     const handleGetMe = async () => {
         setLoading(true);
-        try{
+        try {
             const data = await getMe();
-            setUser(data.user)
+            setUser(data);
+            return { success: true };
+        } catch (error) {
+            console.error("GetMe error:", error?.response?.data?.message);
+            return { success: false };
+        } finally {
+            setLoading(false);
         }
-        catch (error){
-            toast.error(error.message)
-        }
-        finally{
-            setLoading(false)
-        }
-    }
+    };
 
-    return { handleLogin , handleRegister , handleLogout , handleGetMe , user , loading };
-}
+    return { handleLogin, handleRegister, handleLogout, handleGetMe, user, loading };
+};

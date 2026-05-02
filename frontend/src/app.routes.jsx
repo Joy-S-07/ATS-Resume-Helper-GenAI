@@ -1,18 +1,44 @@
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter, Outlet } from 'react-router'
 import Login from './features/auth/pages/Login.jsx'
 import Register from './features/auth/pages/Register.jsx'
+import ForgotPassword from './features/auth/pages/ForgotPassword.jsx'
+import ResetPassword from './features/auth/pages/ResetPassword.jsx'
+import LandingPage from './features/landing/LandingPage.jsx'
+import Navbar from './components/Navbar.jsx'
+
+function RootLayout() {
+    return (
+        <>
+            <Navbar />
+            <Outlet />
+        </>
+    )
+}
 
 export const router = createBrowserRouter([
     {
-        path: "/login",
-        element: <Login />
-    },
-    {
-        path: "/register",
-        element: <Register />
-    },
-    {
-        path: "/",
-        element: <h1>Logged In Successfully</h1>
+        element: <RootLayout />,
+        children: [
+            {
+                path: "/",
+                element: <LandingPage />
+            },
+            {
+                path: "/login",
+                element: <Login />
+            },
+            {
+                path: "/register",
+                element: <Register />
+            },
+            {
+                path: "/forgot-password",
+                element: <ForgotPassword />
+            },
+            {
+                path: "/reset-password",
+                element: <ResetPassword />
+            },
+        ]
     }
 ])
