@@ -17,7 +17,7 @@ export default function LoginPage() {
         e.preventDefault();
         setError("");
         const result = await handleLogin({ email, password });
-        if (result.success) { navigate("/"); }
+        if (result.success) { navigate("/dashboard"); }
         else { setError(result.message); }
     };
 

@@ -4,7 +4,7 @@ import HeroSection from "../../components/HeroSection";
 function FeatureCard({ icon, title, desc }) {
     return (
         <div
-            className="rounded-2xl p-7 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(39,243,169,0.2)]"
+            className="rounded-2xl p-8 md:py-12 flex flex-col items-center text-center gap-5 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(39,243,169,0.2)] h-full w-full"
             style={{
                 background: "rgba(255,255,255,0.02)",
                 border: "1px solid rgba(255,255,255,0.06)",
@@ -12,13 +12,13 @@ function FeatureCard({ icon, title, desc }) {
             }}
         >
             <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center"
+                className="w-14 h-14 rounded-xl flex items-center justify-center mb-2"
                 style={{ background: "rgba(39,243,169,0.1)", border: "1px solid rgba(39,243,169,0.15)" }}
             >
                 {icon}
             </div>
-            <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 19, color: "#fff", letterSpacing: "-0.3px" }}>{title}</h3>
-            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 14, lineHeight: 1.7 }}>{desc}</p>
+            <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 22, color: "#fff", letterSpacing: "-0.3px" }}>{title}</h3>
+            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 15, lineHeight: 1.8 }}>{desc}</p>
         </div>
     );
 }
@@ -35,20 +35,18 @@ function StatBlock({ value, label }) {
     );
 }
 
-// ─── Step Item ───────────────────────────────────────────────────────────────
+// ─── Step Item (centered) ────────────────────────────────────────────────────
 function StepItem({ num, title, desc }) {
     return (
-        <div className="flex gap-5 items-start">
+        <div className="flex flex-col items-center text-center gap-3">
             <div
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(39,243,169,0.15)", border: "1px solid rgba(39,243,169,0.25)", fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 15, color: "#27F3A9" }}
+                className="w-12 h-12 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(39,243,169,0.15)", border: "1px solid rgba(39,243,169,0.25)", fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 16, color: "#27F3A9" }}
             >
                 {num}
             </div>
-            <div>
-                <h4 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", marginBottom: 6 }}>{title}</h4>
-                <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, lineHeight: 1.7 }}>{desc}</p>
-            </div>
+            <h4 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 18, color: "#fff" }}>{title}</h4>
+            <p className="max-w-sm" style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, lineHeight: 1.7 }}>{desc}</p>
         </div>
     );
 }
@@ -62,17 +60,17 @@ export default function LandingPage() {
 
             {/* ── Features Section ── */}
             <section id="features" style={{ background: "#000", padding: "120px 24px 100px" }}>
-                <div className="max-w-6xl mx-auto">
+                <div className="w-full mx-auto">
                     <div className="text-center mb-16">
                         <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#27F3A9" }}>Features</p>
                         <h2 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "clamp(1.8rem, 4vw, 2.8rem)", color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.15 }}>
                             Everything you need to land the job
                         </h2>
-                        <p className="mt-5 max-w-md mx-auto" style={{ color: "rgba(255,255,255,0.4)", fontSize: 15, lineHeight: 1.6 }}>
+                        <p className="mt-5 w-full mx-auto m-10" style={{ color: "rgba(255,255,255,0.4)", fontSize: 15, lineHeight: 1.6 }}>
                             From resume analysis to interview prep — one AI-powered platform.
                         </p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 justify-items-center">
                         <FeatureCard
                             icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#27F3A9" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>}
                             title="ATS Score Analysis"
@@ -109,7 +107,7 @@ export default function LandingPage() {
 
             {/* ── Stats Section ── */}
             <section style={{ background: "#000", padding: "40px 24px 80px" }}>
-                <div className="max-w-4xl mx-auto">
+                <div className="w-full mx-auto">
                     <div
                         className="rounded-2xl py-10 px-8"
                         style={{
@@ -129,14 +127,14 @@ export default function LandingPage() {
 
             {/* ── How It Works ── */}
             <section id="how-it-works" style={{ background: "#000", padding: "80px 24px 120px" }}>
-                <div className="max-w-3xl mx-auto">
+                <div className="w-full mx-auto">
                     <div className="text-center mb-16">
                         <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#27F3A9" }}>How It Works</p>
                         <h2 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "clamp(1.8rem, 4vw, 2.8rem)", color: "#fff", letterSpacing: "-0.5px" }}>
                             Three steps to your dream job
                         </h2>
                     </div>
-                    <div className="flex flex-col gap-12">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
                         <StepItem num="1" title="Upload Your Resume" desc="Drop your existing resume or paste a job description. Our AI instantly analyzes your document against real ATS systems." />
                         <StepItem num="2" title="Get AI-Powered Insights" desc="Receive a detailed ATS score, keyword analysis, formatting suggestions, and a side-by-side comparison with the target job." />
                         <StepItem num="3" title="Generate & Apply" desc="Let AI rebuild your resume with optimized content, proper formatting, and targeted keywords. Download and apply with confidence." />
@@ -175,13 +173,14 @@ export default function LandingPage() {
 
             {/* ── Footer ── */}
             <footer style={{ background: "#000", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "28px 24px" }}>
-                <div className="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4">
+                <div className="max-w-6xl mx-auto flex items-center justify-center flex-wrap gap-4">
                     <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #27F3A9, #0fa968)" }}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
                         </div>
                         <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 14, color: "#fff" }}>ResumeIQ</span>
                     </div>
+                    <span style={{ color: "rgba(255,255,255,0.1)" }}>•</span>
                     <p style={{ color: "rgba(255,255,255,0.2)", fontSize: 12 }}>© 2026 ResumeIQ. AI-powered ATS Resume Helper.</p>
                 </div>
             </footer>

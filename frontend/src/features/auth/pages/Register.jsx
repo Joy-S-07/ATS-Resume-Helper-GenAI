@@ -18,7 +18,7 @@ export default function RegisterPage() {
         e.preventDefault();
         setError("");
         const result = await handleRegister({ username: name, email, password });
-        if (result.success) { navigate("/"); }
+        if (result.success) { navigate("/dashboard"); }
         else { setError(result.message); }
     };
 
