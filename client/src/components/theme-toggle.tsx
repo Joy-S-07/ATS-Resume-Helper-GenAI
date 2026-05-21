@@ -25,11 +25,11 @@ function DotMatrixPattern({ isDarkTarget }: { isDarkTarget: boolean }) {
     <motion.svg
       className="absolute inset-0 w-full h-full"
       style={{ willChange: "transform, opacity" }}
-      initial={{ opacity: 0, scale: 1.3 }}
+      initial={{ opacity: 0, scale: 1.15 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{
-        opacity: { duration: 0.4, ease: "easeOut" },
-        scale: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+        opacity: { duration: 0.25, ease: "easeOut" },
+        scale: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
       }}
       aria-hidden="true"
     >
@@ -105,18 +105,15 @@ export function ThemeToggle() {
       // ── 4. Swap theme behind the mask after a brief delay ──
       // The overlay is already expanding, hiding the DOM swap.
       requestAnimationFrame(() => {
-        setTimeout(() => setTheme(newTheme), 60);
+        setTimeout(() => setTheme(newTheme), 30);
       });
     },
     [isDark, setTheme]
   );
 
   const handleAnimationComplete = useCallback(() => {
-    // Small grace period for the exit animation
-    setTimeout(() => {
-      isAnimating.current = false;
-      setOverlay(null);
-    }, 80);
+    isAnimating.current = false;
+    setOverlay(null);
   }, []);
 
   return (
@@ -180,13 +177,11 @@ export function ThemeToggle() {
             }}
             transition={{
               clipPath: {
-                type: "spring",
-                damping: 25,
-                stiffness: 120,
-                mass: 0.5,
+                duration: 0.45,
+                ease: [0.22, 1, 0.36, 1],
               },
               opacity: {
-                duration: 0.25,
+                duration: 0.2,
                 ease: "easeOut",
               },
             }}
@@ -206,10 +201,10 @@ export function ThemeToggle() {
                 } 0%, transparent 60%)`,
                 willChange: "transform, opacity",
               }}
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1.2, opacity: 1 }}
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1.1, opacity: 1 }}
               transition={{
-                duration: 0.6,
+                duration: 0.4,
                 ease: [0.22, 1, 0.36, 1],
               }}
             />
