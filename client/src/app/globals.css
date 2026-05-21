@@ -109,3 +109,18 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
+
+/* ─── Dot Pattern Breathing Animation ─── */
+@keyframes dot-breathe {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Register the animation as a Tailwind v4 utility */
+@theme inline {
+  --animate-dot-breathe: dot-breathe 6s ease-in-out infinite;
+}

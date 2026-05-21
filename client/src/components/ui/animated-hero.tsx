@@ -3,11 +3,15 @@
 import { MoveRight, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GooeyText } from "@/components/ui/gooey-text-morphing";
+import { AnimatedDotPattern } from "@/components/ui/animated-dot-pattern";
 import Link from "next/link";
 
 function Hero() {
   return (
-    <div className="w-full">
+    <div className="w-full relative">
+      {/* Animated dot-matrix background */}
+      <AnimatedDotPattern />
+
       <div className="container mx-auto">
         <div className="flex gap-8 py-20 lg:py-40 items-center justify-center flex-col">
           <div>
