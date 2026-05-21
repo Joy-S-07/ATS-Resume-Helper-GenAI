@@ -6,11 +6,12 @@ import ResetPassword from './features/auth/pages/ResetPassword.jsx'
 import LandingPage from './features/landing/LandingPage.jsx'
 import Dashboard from './features/dashboard/Dashboard.jsx'
 import Navbar from './components/Navbar.jsx'
+import { Navbar as NavbarNew } from './components/app-navbar'
 
 function RootLayout() {
     return (
         <>
-            <Navbar />
+            <NavbarNew />
             <Outlet />
         </>
     )

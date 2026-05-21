@@ -1,11 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark" suppressHydrationWarning>
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="ATS Resume Helper — AI-powered platform for resume analysis, skill gap detection, and ATS-optimized resume generation." />
     <title>ATS Resume Helper — AI Career Platform</title>
+    <script>
+      // Prevent FOUC — apply saved theme before React mounts
+      (function() {
+        try {
+          var theme = localStorage.getItem('theme');
+          if (theme === 'light') {
+            document.documentElement.classList.remove('dark');
+          } else {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
