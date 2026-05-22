@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState } from "react";
-import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────
@@ -45,7 +44,6 @@ export function InteractiveDotGrid({ className }: { className?: string }) {
   const rafRef = useRef<number>(0);
   const sizeRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
 
-  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -77,11 +75,7 @@ export function InteractiveDotGrid({ className }: { className?: string }) {
     const mouse = mouseRef.current;
     const dots = dotsRef.current;
 
-    // Determine dot color from current theme
-    const isDark = resolvedTheme === "dark";
-    const dotColor = isDark
-      ? "rgba(210, 220, 240, 0.45)" // cool-white on charcoal
-      : "rgba(15, 20, 45, 0.65)";   // much darker charcoal-grey on white
+    const dotColor = "rgba(210, 220, 240, 0.45)"; // cool-white on charcoal
 
     // ── Clear canvas ──
     ctx.clearRect(0, 0, w, h);
@@ -136,7 +130,7 @@ export function InteractiveDotGrid({ className }: { className?: string }) {
     }
 
     rafRef.current = requestAnimationFrame(animate);
-  }, [resolvedTheme]);
+  }, []);
 
   // ── Canvas setup & resize handling ──
   useEffect(() => {

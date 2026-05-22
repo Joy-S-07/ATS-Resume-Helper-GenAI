@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Briefcase, Menu, X } from "lucide-react";
 
 function Navbar() {
@@ -40,7 +39,6 @@ function Navbar() {
             ))}
           </ul>
           <div className="flex items-center gap-4">
-            <ThemeToggle />
             <Button asChild>
               <Link href="/login">Sign In</Link>
             </Button>
@@ -49,7 +47,6 @@ function Navbar() {
 
         {/* Mobile Controls */}
         <div className="md:hidden flex items-center gap-2">
-          <ThemeToggle />
           <Button
             onClick={() => setIsOpen(!isOpen)}
             size="icon"

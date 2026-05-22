@@ -74,7 +74,7 @@ function Hero() {
               </Link>
             </Button>
             <Button size="lg" className="gap-4" asChild>
-              <Link href="/register">
+              <Link href="/login">
                 Get Started Free <MoveRight className="w-4 h-4" />
               </Link>
             </Button>
