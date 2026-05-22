@@ -12,9 +12,10 @@ import {
   MoveRight,
   CheckCircle,
   ArrowRight,
-  Briefcase,
 } from "lucide-react";
 import Link from "next/link";
+import { HeroScrollDemo } from "@/components/ui/hero-scroll-demo";
+import { Footer } from "@/components/ui/footer";
 
 /* ─── Feature Card ──────────────────────────────────────────────────────── */
 function FeatureCard({
@@ -146,6 +147,9 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Scroll Animation Demo ── */}
+      <HeroScrollDemo />
+
       {/* ── How It Works ── */}
       <section id="interview" className="py-20 md:py-28">
         <div className="container mx-auto px-4">
@@ -206,20 +210,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-border py-8">
-        <div className="container mx-auto px-4 flex items-center justify-center flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <Briefcase className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-sm text-foreground">CareerAI</span>
-          </div>
-          <span className="text-border">•</span>
-          <p className="text-muted-foreground text-xs">
-            © 2026 CareerAI. AI-powered ATS Resume Helper.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

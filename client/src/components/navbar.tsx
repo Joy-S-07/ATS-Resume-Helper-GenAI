@@ -2,11 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Briefcase, Menu, X } from "lucide-react";
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  if (pathname === "/login") {
+    return null;
+  }
 
   const navLinks = [
     { name: "ATS Checker", href: "#ats" },
