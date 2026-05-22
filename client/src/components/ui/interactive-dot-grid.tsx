@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
  * ───────────────────────────────────────────────────────────── */
 
 // ── Physics tuning knobs ──
-const DOT_SPACING = 30;       // px between grid dots
+const DOT_SPACING = 24;       // px between grid dots
 const DOT_RADIUS = 1;         // base dot radius in px
 const REPULSE_RADIUS = 120;   // cursor area-of-effect in px
 const REPULSE_STRENGTH = 60;  // max push distance in px
@@ -80,8 +80,8 @@ export function InteractiveDotGrid({ className }: { className?: string }) {
     // Determine dot color from current theme
     const isDark = resolvedTheme === "dark";
     const dotColor = isDark
-      ? "rgba(210, 220, 240, 0.55)" // cool-white on charcoal
-      : "rgba(20, 25, 50, 0.45)";   // charcoal-grey on white
+      ? "rgba(210, 220, 240, 0.45)" // cool-white on charcoal
+      : "rgba(15, 20, 45, 0.65)";   // much darker charcoal-grey on white
 
     // ── Clear canvas ──
     ctx.clearRect(0, 0, w, h);
@@ -184,21 +184,32 @@ export function InteractiveDotGrid({ className }: { className?: string }) {
     };
   }, [mounted, buildGrid, animate]);
 
-  // ── Mouse tracking ──
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  // ── Mouse tracking via window to handle z-index overlaps ──
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    mouseRef.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-      active: true,
+      const rect = canvas.getBoundingClientRect();
+      // Only track if inside the canvas bounds (or just track everywhere relative to canvas)
+      mouseRef.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+        active: true,
+      };
     };
-  }, []);
 
-  const handleMouseLeave = useCallback(() => {
-    mouseRef.current = { x: -9999, y: -9999, active: false };
+    const handleMouseLeave = () => {
+      mouseRef.current = { x: -9999, y: -9999, active: false };
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+    };
   }, []);
 
   if (!mounted) return null;
@@ -206,8 +217,6 @@ export function InteractiveDotGrid({ className }: { className?: string }) {
   return (
     <canvas
       ref={canvasRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
       className={cn(
         "absolute inset-0 -z-10",
         className
