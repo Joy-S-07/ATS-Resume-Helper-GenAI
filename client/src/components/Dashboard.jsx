@@ -29,15 +29,38 @@ export default function Dashboard() {
   const [isClient, setIsClient] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Profile State
+  const [profile, setProfile] = useState({
+    firstName: "Alex",
+    lastName: "Carter",
+    email: "alex@example.com",
+    role: "Senior Frontend Developer",
+    location: "San Francisco, CA",
+    experienceLevel: "senior",
+    bio: "Passionate frontend developer with 5+ years of experience building highly interactive web applications using React, Next.js, and Three.js."
+  });
+  
+  // Form State
+  const [formData, setFormData] = useState({ ...profile });
+
   const [skills, setSkills] = useState(["React", "Next.js", "TypeScript", "Tailwind CSS", "Three.js", "Framer Motion", "Node.js"]);
   const [newSkill, setNewSkill] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  
   const [experiences, setExperiences] = useState([
     { id: 1, title: "Senior Frontend Developer", company: "TechCorp Inc.", duration: "2021 - Present" },
     { id: 2, title: "Frontend Developer", company: "StartupXYZ", duration: "2019 - 2021" },
   ]);
+  
   const [education, setEducation] = useState([
     { id: 1, degree: "B.S. Computer Science", institution: "Stanford University", year: "2019" },
+  ]);
+
+  const [links, setLinks] = useState([
+    { id: 1, name: "GitHub", url: "https://github.com/alexcarter", iconType: "github" },
+    { id: 2, name: "LinkedIn", url: "https://linkedin.com/in/alexcarter", iconType: "linkedin" },
+    { id: 3, name: "Portfolio", url: "https://alexcarter.dev", iconType: "portfolio" },
   ]);
 
   const SKILL_SUGGESTIONS = [
@@ -129,6 +152,18 @@ export default function Dashboard() {
     setEducation(education.map((e) => e.id === id ? { ...e, [field]: value } : e));
   };
 
+  const addLink = () => {
+    setLinks([...links, { id: Date.now(), name: "", url: "", iconType: "link" }]);
+  };
+
+  const removeLink = (id) => {
+    setLinks(links.filter((l) => l.id !== id));
+  };
+
+  const updateLink = (id, field, value) => {
+    setLinks(links.map((l) => l.id === id ? { ...l, [field]: value } : l));
+  };
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -136,7 +171,10 @@ export default function Dashboard() {
   const handleSave = (e) => {
     e.preventDefault();
     setIsSaving(true);
-    setTimeout(() => setIsSaving(false), 1000);
+    setTimeout(() => {
+      setProfile({ ...formData });
+      setIsSaving(false);
+    }, 1000);
   };
 
   return (
@@ -170,22 +208,26 @@ export default function Dashboard() {
                   <span className="text-xs font-semibold text-white">Edit</span>
                 </div>
               </div>
-              <h2 className="text-2xl font-extrabold text-white mb-1 tracking-tight">Alex Carter</h2>
-              <p className="text-sm text-primary font-medium mb-4">Senior Frontend Developer</p>
+              <h2 className="text-2xl font-extrabold text-white mb-1 tracking-tight">{profile.firstName} {profile.lastName}</h2>
+              <p className="text-sm text-primary font-medium mb-4">{profile.role}</p>
 
               <div className="w-full space-y-3 text-sm text-slate-400 text-left mt-4 border-t border-white/10 pt-5">
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-slate-500" />
-                  <span>alex@example.com</span>
+                  <span>{profile.email}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <MapPin className="w-4 h-4 text-slate-500" />
-                  <span>San Francisco, CA</span>
+                  <span>{profile.location}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <LinkIcon className="w-4 h-4 text-slate-500" />
-                  <a href="#" className="hover:text-primary transition-colors">github.com/alexcarter</a>
-                </div>
+                {links.slice(0, 1).map(link => (
+                  <div key={link.id} className="flex items-center gap-3">
+                    <LinkIcon className="w-4 h-4 text-slate-500" />
+                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors truncate">
+                      {link.url.replace(/^https?:\/\//, '')}
+                    </a>
+                  </div>
+                ))}
               </div>
             </motion.div>
 
@@ -217,8 +259,32 @@ export default function Dashboard() {
                     : "text-slate-400 hover:bg-white/5 hover:text-white"
                 )}
               >
-                <Settings className="w-4 h-4" />
-                Settings
+                <User className="w-4 h-4" />
+                My Info
+              </button>
+              <button
+                onClick={() => setActiveTab("resumes")}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left",
+                  activeTab === "resumes"
+                    ? "bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)] border border-white/10"
+                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                )}
+              >
+                <FileText className="w-4 h-4" />
+                Resumes
+              </button>
+              <button
+                onClick={() => setActiveTab("jobs")}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left",
+                  activeTab === "jobs"
+                    ? "bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)] border border-white/10"
+                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                )}
+              >
+                <Briefcase className="w-4 h-4" />
+                Job Tracker
               </button>
             </motion.div>
           </div>
@@ -319,11 +385,11 @@ export default function Dashboard() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <label className="text-xs font-semibold tracking-wider uppercase text-slate-400 ml-1">First Name</label>
-                          <input type="text" defaultValue="Alex" className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
+                          <input type="text" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
                         </div>
                         <div className="space-y-1">
                           <label className="text-xs font-semibold tracking-wider uppercase text-slate-400 ml-1">Last Name</label>
-                          <input type="text" defaultValue="Carter" className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
+                          <input type="text" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
                         </div>
                         <div className="space-y-1">
                           <label className="text-xs font-semibold tracking-wider uppercase text-slate-400 ml-1">Email Address</label>
@@ -331,7 +397,7 @@ export default function Dashboard() {
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                               <Mail className="h-4 w-4 text-slate-400" />
                             </div>
-                            <input type="email" defaultValue="alex@example.com" className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
+                            <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
                           </div>
                         </div>
                         <div className="space-y-1">
@@ -340,7 +406,7 @@ export default function Dashboard() {
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                               <MapPin className="h-4 w-4 text-slate-400" />
                             </div>
-                            <input type="text" defaultValue="San Francisco, CA" className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
+                            <input type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
                           </div>
                         </div>
                       </div>
@@ -351,12 +417,12 @@ export default function Dashboard() {
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                               <Briefcase className="h-4 w-4 text-slate-400" />
                             </div>
-                            <input type="text" defaultValue="Senior Frontend Developer" className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
+                            <input type="text" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
                           </div>
                         </div>
                         <div className="space-y-1">
                           <label className="text-xs font-semibold tracking-wider uppercase text-slate-400 ml-1">Experience Level</label>
-                          <select defaultValue="senior" className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all appearance-none cursor-pointer">
+                          <select value={formData.experienceLevel} onChange={e => setFormData({...formData, experienceLevel: e.target.value})} className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all appearance-none cursor-pointer">
                             <option className="bg-[#111]" value="junior">Junior (0-2 years)</option>
                             <option className="bg-[#111]" value="mid">Mid-Level (2-5 years)</option>
                             <option className="bg-[#111]" value="senior">Senior (5-8 years)</option>
@@ -366,7 +432,7 @@ export default function Dashboard() {
                       </div>
                       <div className="space-y-1">
                         <label className="text-xs font-semibold tracking-wider uppercase text-slate-400 ml-1">Bio</label>
-                        <textarea rows={2} defaultValue="Passionate frontend developer with 5+ years of experience building highly interactive web applications using React, Next.js, and Three.js." className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all resize-none leading-relaxed" />
+                        <textarea rows={2} value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all resize-none leading-relaxed" />
                       </div>
                     </form>
                   </div>
@@ -434,32 +500,55 @@ export default function Dashboard() {
 
                     {/* Links */}
                     <div className="glass-card p-5 lg:p-6 shadow-lg">
-                      <h3 className="text-lg font-extrabold text-white mb-4 tracking-tight flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-primary" />
-                        Links
-                      </h3>
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <label className="text-xs font-semibold tracking-wider uppercase text-slate-400 ml-1">GitHub</label>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10"><LinkIcon className="h-4 w-4 text-slate-400" /></div>
-                            <input type="url" defaultValue="https://github.com/alexcarter" className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs font-semibold tracking-wider uppercase text-slate-400 ml-1">LinkedIn</label>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10"><LinkIcon className="h-4 w-4 text-slate-400" /></div>
-                            <input type="url" defaultValue="https://linkedin.com/in/alexcarter" className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs font-semibold tracking-wider uppercase text-slate-400 ml-1">Portfolio</label>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10"><Globe className="h-4 w-4 text-slate-400" /></div>
-                            <input type="url" defaultValue="https://alexcarter.dev" className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all" />
-                          </div>
-                        </div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-primary" />
+                          Links
+                        </h3>
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={addLink}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-white/10 border border-white/10 rounded-lg text-xs text-white hover:bg-white/20 transition-all"
+                        >
+                          <Plus className="w-3 h-3" /> Add
+                        </motion.button>
+                      </div>
+                      <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                        {links.map((link) => (
+                          <motion.div
+                            key={link.id}
+                            layout
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-2 group relative"
+                          >
+                            {links.length > 1 && (
+                              <button
+                                onClick={() => removeLink(link.id)}
+                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded-lg z-20"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-400" />
+                              </button>
+                            )}
+                            <input
+                              type="text"
+                              value={link.name}
+                              onChange={(e) => updateLink(link.id, "name", e.target.value)}
+                              placeholder="Platform Name (e.g., GitHub, Portfolio)"
+                              className="w-full px-3 py-1.5 bg-transparent border-b border-white/10 text-white text-sm focus:outline-none focus:border-white/30 transition-all placeholder-slate-500"
+                            />
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10"><LinkIcon className="h-4 w-4 text-slate-400" /></div>
+                              <input
+                                type="url"
+                                value={link.url}
+                                onChange={(e) => updateLink(link.id, "url", e.target.value)}
+                                placeholder="https://"
+                                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 transition-all"
+                              />
+                            </div>
+                          </motion.div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -601,6 +690,177 @@ export default function Dashboard() {
                         "Save Changes"
                       )}
                     </motion.button>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === "resumes" && (
+                <motion.div
+                  key="resumes"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex flex-col gap-6"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">My Resumes</h1>
+                      <p className="text-slate-400">Manage and tailor your resumes for different applications.</p>
+                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-slate-200 transition-all text-sm"
+                    >
+                      <Plus className="w-4 h-4" /> Create New
+                    </motion.button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Resume Card 1 */}
+                    <motion.div whileHover={{ y: -4 }} className="glass-card p-5 group flex flex-col justify-between h-56 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-2">
+                          <button className="p-2 bg-black/50 backdrop-blur-md rounded-lg hover:bg-white/20 transition-all text-white"><Eye className="w-4 h-4" /></button>
+                          <button className="p-2 bg-black/50 backdrop-blur-md rounded-lg hover:bg-white/20 transition-all text-red-400"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
+                          <FileText className="w-5 h-5 text-blue-400" />
+                        </div>
+                        <h3 className="text-lg font-bold text-white mb-1">Frontend Engineer</h3>
+                        <p className="text-xs text-slate-400">Updated 2 days ago</p>
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-xs font-medium">
+                        <span className="text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-md">ATS Score: 92%</span>
+                        <span className="text-slate-500">Tailored</span>
+                      </div>
+                    </motion.div>
+
+                    {/* Resume Card 2 */}
+                    <motion.div whileHover={{ y: -4 }} className="glass-card p-5 group flex flex-col justify-between h-56 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-2">
+                          <button className="p-2 bg-black/50 backdrop-blur-md rounded-lg hover:bg-white/20 transition-all text-white"><Eye className="w-4 h-4" /></button>
+                          <button className="p-2 bg-black/50 backdrop-blur-md rounded-lg hover:bg-white/20 transition-all text-red-400"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-4">
+                          <FileText className="w-5 h-5 text-purple-400" />
+                        </div>
+                        <h3 className="text-lg font-bold text-white mb-1">Fullstack Developer</h3>
+                        <p className="text-xs text-slate-400">Updated 1 week ago</p>
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-xs font-medium">
+                        <span className="text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-md">ATS Score: 88%</span>
+                        <span className="text-slate-500">General</span>
+                      </div>
+                    </motion.div>
+
+                    {/* Create New Card */}
+                    <motion.div whileHover={{ scale: 0.98 }} className="border-2 border-dashed border-white/10 hover:border-white/30 rounded-2xl p-5 flex flex-col items-center justify-center h-56 transition-all cursor-pointer bg-white/[0.02] hover:bg-white/[0.05]">
+                      <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-3">
+                        <Plus className="w-6 h-6 text-white" />
+                      </div>
+                      <p className="text-sm font-semibold text-white">Create New Resume</p>
+                      <p className="text-xs text-slate-400 mt-1">Start from scratch or import</p>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === "jobs" && (
+                <motion.div
+                  key="jobs"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex flex-col gap-6"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">Job Tracker</h1>
+                      <p className="text-slate-400">Track your applications and interview stages.</p>
+                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-slate-200 transition-all text-sm"
+                    >
+                      <Plus className="w-4 h-4" /> Add Application
+                    </motion.button>
+                  </div>
+
+                  <div className="glass-card overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm text-slate-300">
+                        <thead className="bg-white/5 text-xs uppercase font-semibold text-slate-400 border-b border-white/10">
+                          <tr>
+                            <th className="px-6 py-4">Company</th>
+                            <th className="px-6 py-4">Role</th>
+                            <th className="px-6 py-4">Date Applied</th>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          <tr className="hover:bg-white/[0.02] transition-colors">
+                            <td className="px-6 py-4 font-medium text-white">Google</td>
+                            <td className="px-6 py-4">Senior UI Engineer</td>
+                            <td className="px-6 py-4 text-slate-400">May 20, 2026</td>
+                            <td className="px-6 py-4">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Interviewing
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button className="text-slate-400 hover:text-white transition-colors">View</button>
+                            </td>
+                          </tr>
+                          <tr className="hover:bg-white/[0.02] transition-colors">
+                            <td className="px-6 py-4 font-medium text-white">Vercel</td>
+                            <td className="px-6 py-4">Frontend Developer</td>
+                            <td className="px-6 py-4 text-slate-400">May 18, 2026</td>
+                            <td className="px-6 py-4">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span> Assessment
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button className="text-slate-400 hover:text-white transition-colors">View</button>
+                            </td>
+                          </tr>
+                          <tr className="hover:bg-white/[0.02] transition-colors">
+                            <td className="px-6 py-4 font-medium text-white">Meta</td>
+                            <td className="px-6 py-4">React Engineer</td>
+                            <td className="px-6 py-4 text-slate-400">May 10, 2026</td>
+                            <td className="px-6 py-4">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Offer
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button className="text-slate-400 hover:text-white transition-colors">View</button>
+                            </td>
+                          </tr>
+                          <tr className="hover:bg-white/[0.02] transition-colors">
+                            <td className="px-6 py-4 font-medium text-white">StartupXYZ</td>
+                            <td className="px-6 py-4">Software Engineer</td>
+                            <td className="px-6 py-4 text-slate-400">May 05, 2026</td>
+                            <td className="px-6 py-4">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Applied
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button className="text-slate-400 hover:text-white transition-colors">View</button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </motion.div>
               )}
