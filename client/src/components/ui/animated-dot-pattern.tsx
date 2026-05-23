@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
  */
 export function AnimatedDotPattern({
   className,
-  dotSpacing = 28,
+  dotSpacing = 30,
   dotRadius = 1,
 }: {
   className?: string;
@@ -47,7 +47,7 @@ export function AnimatedDotPattern({
               cx={dotSpacing / 2}
               cy={dotSpacing / 2}
               r={dotRadius}
-              fill="rgba(220, 228, 245, 0.75)"
+              fill="rgba(210, 220, 240, 0.55)"
             />
           </pattern>
 
@@ -64,7 +64,7 @@ export function AnimatedDotPattern({
               cx={dotSpacing / 2}
               cy={dotSpacing / 2}
               r={dotRadius}
-              fill="rgba(15, 20, 45, 0.55)"
+              fill="rgba(20, 25, 50, 0.45)"
             />
           </pattern>
         </defs>

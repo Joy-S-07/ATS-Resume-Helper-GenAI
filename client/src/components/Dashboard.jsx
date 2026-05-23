@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CanvasRevealEffect } from "@/components/ui/login-page";
+import { FallingPattern } from "@/components/ui/falling-pattern";
 import {
   User,
   Mail,
@@ -36,48 +36,39 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#050505] text-slate-200 overflow-x-hidden pt-24 pb-20">
+    <div className="relative min-h-screen w-full bg-[#050505] text-slate-200 overflow-x-hidden pt-16 pb-10">
       {/* Background Effect */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         {isClient && (
-          <div className="absolute inset-0">
-            <CanvasRevealEffect
-              animationSpeed={3}
-              containerClassName="bg-black"
-              colors={[
-                [255, 255, 255],
-                [255, 255, 255],
-              ]}
-              dotSize={2}
-              reverse={false}
-            />
-          </div>
+          <FallingPattern
+            className="h-full w-full [mask-image:radial-gradient(ellipse_at_center,transparent,#050505)]"
+            color="rgba(255, 255, 255, 0.5)"
+            backgroundColor="#050505"
+          />
         )}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(0,0,0,0.8)_0%,_rgba(0,0,0,1)_100%)]" />
-        <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-black to-transparent" />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10 max-w-6xl">
-        <div className="flex flex-col md:flex-row gap-8">
-          
+      <div className="w-full mx-auto px-6 md:px-10 lg:px-16 relative z-10">
+        <div className="flex flex-col md:flex-row gap-6">
+
           {/* Sidebar / Left Column */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-6">
             {/* Profile Card */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               className="glass-card p-6 flex flex-col items-center text-center shadow-lg"
             >
               <div className="w-24 h-24 rounded-full bg-primary/20 border-2 border-white/10 flex items-center justify-center mb-4 overflow-hidden relative group">
-                 <User className="w-12 h-12 text-white/50" />
-                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm">
-                    <span className="text-xs font-semibold text-white">Edit</span>
-                 </div>
+                <User className="w-12 h-12 text-white/50" />
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm">
+                  <span className="text-xs font-semibold text-white">Edit</span>
+                </div>
               </div>
               <h2 className="text-2xl font-extrabold text-white mb-1 tracking-tight">Alex Carter</h2>
               <p className="text-sm text-primary font-medium mb-4">Senior Frontend Developer</p>
-              
+
               <div className="w-full space-y-3 text-sm text-slate-400 text-left mt-4 border-t border-white/10 pt-5">
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-slate-500" />
@@ -95,30 +86,30 @@ export default function Dashboard() {
             </motion.div>
 
             {/* Navigation */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="glass-card p-2 flex flex-col gap-1 shadow-lg"
             >
-              <button 
+              <button
                 onClick={() => setActiveTab("overview")}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left",
-                  activeTab === "overview" 
-                    ? "bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)] border border-white/10" 
+                  activeTab === "overview"
+                    ? "bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)] border border-white/10"
                     : "text-slate-400 hover:bg-white/5 hover:text-white"
                 )}
               >
                 <Activity className="w-4 h-4" />
                 Overview
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab("settings")}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left",
-                  activeTab === "settings" 
-                    ? "bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)] border border-white/10" 
+                  activeTab === "settings"
+                    ? "bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)] border border-white/10"
                     : "text-slate-400 hover:bg-white/5 hover:text-white"
                 )}
               >
@@ -129,75 +120,75 @@ export default function Dashboard() {
           </div>
 
           {/* Main Content Area */}
-          <div className="w-full md:w-2/3 lg:w-3/4 flex flex-col gap-8">
+          <div className="w-full md:w-2/3 lg:w-3/4 flex flex-col">
             <AnimatePresence mode="wait">
               {activeTab === "overview" && (
-                <motion.div 
+                <motion.div
                   key="overview"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-8"
+                  className="flex flex-col gap-6 flex-1"
                 >
                   {/* Stats Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard 
-                      icon={<FileText className="w-5 h-5 text-primary" />} 
-                      label="Resumes Built" 
-                      value="12" 
+                    <StatCard
+                      icon={<FileText className="w-5 h-5 text-primary" />}
+                      label="Resumes Built"
+                      value="12"
                       trend="+2 this week"
                     />
-                    <StatCard 
-                      icon={<CheckCircle className="w-5 h-5 text-primary" />} 
-                      label="ATS Pass Rate" 
-                      value="94%" 
+                    <StatCard
+                      icon={<CheckCircle className="w-5 h-5 text-primary" />}
+                      label="ATS Pass Rate"
+                      value="94%"
                       trend="+5% improvement"
                     />
-                    <StatCard 
-                      icon={<Eye className="w-5 h-5 text-primary" />} 
-                      label="Profile Views" 
-                      value="1,248" 
+                    <StatCard
+                      icon={<Eye className="w-5 h-5 text-primary" />}
+                      label="Profile Views"
+                      value="1,248"
                       trend="+120 this month"
                     />
-                    <StatCard 
-                      icon={<Briefcase className="w-5 h-5 text-primary" />} 
-                      label="Applications" 
-                      value="34" 
+                    <StatCard
+                      icon={<Briefcase className="w-5 h-5 text-primary" />}
+                      label="Applications"
+                      value="34"
                       trend="4 active processes"
                     />
                   </div>
 
-                  {/* Activity Timeline */}
-                  <div className="glass-card p-6 lg:p-8 shadow-lg">
-                    <h3 className="text-xl font-extrabold text-white mb-8 flex items-center gap-2">
+                  {/* Activity Timeline - Horizontal */}
+                  <div className="glass-card p-5 lg:p-6 shadow-lg flex-1 flex flex-col">
+                    <h3 className="text-lg font-extrabold text-white mb-5 flex items-center gap-2">
                       <TrendingUp className="w-5 h-5 text-primary" />
                       Recent Activity
                     </h3>
-                    
-                    <div className="space-y-0 relative border-l border-white/10 ml-4 md:ml-6 pb-4">
-                      <TimelineItem 
-                        title="Resume Optimized for 'Senior Frontend Engineer'"
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1">
+                      <TimelineItem
+                        title="Resume Optimized"
                         date="Today, 10:30 AM"
-                        icon={<FileText className="w-3 h-3" />}
+                        icon={<FileText className="w-3.5 h-3.5" />}
                         status="success"
                       />
-                      <TimelineItem 
-                        title="Completed Mock Interview"
+                      <TimelineItem
+                        title="Mock Interview"
                         date="Yesterday, 2:15 PM"
-                        icon={<Activity className="w-3 h-3" />}
+                        icon={<Activity className="w-3.5 h-3.5" />}
                         status="info"
                       />
-                      <TimelineItem 
-                        title="Added new skill: 'Framer Motion'"
+                      <TimelineItem
+                        title="New Skill Added"
                         date="Oct 24, 2023"
-                        icon={<CheckCircle className="w-3 h-3" />}
+                        icon={<CheckCircle className="w-3.5 h-3.5" />}
                         status="default"
                       />
-                      <TimelineItem 
+                      <TimelineItem
                         title="Profile Created"
                         date="Oct 20, 2023"
-                        icon={<User className="w-3 h-3" />}
+                        icon={<User className="w-3.5 h-3.5" />}
                         status="default"
                       />
                     </div>
@@ -206,7 +197,7 @@ export default function Dashboard() {
               )}
 
               {activeTab === "settings" && (
-                <motion.div 
+                <motion.div
                   key="settings"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -215,7 +206,7 @@ export default function Dashboard() {
                 >
                   <div className="glass-card p-6 lg:p-8 shadow-lg">
                     <h3 className="text-2xl font-extrabold text-white mb-8 tracking-tight">Profile Settings</h3>
-                    
+
                     <form onSubmit={handleSave} className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-1">
@@ -263,7 +254,7 @@ export default function Dashboard() {
                           />
                         </div>
                       </div>
-                      
+
                       <div className="space-y-1">
                         <label className="text-xs font-semibold tracking-wider uppercase text-slate-400 ml-1">Bio</label>
                         <textarea
@@ -302,7 +293,7 @@ export default function Dashboard() {
 
 function StatCard({ icon, label, value, trend }) {
   return (
-    <motion.div 
+    <motion.div
       whileHover={{ y: -2 }}
       className="glass-card p-6 group flex flex-col gap-4 transition-all hover:border-white/20 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
     >
@@ -316,7 +307,7 @@ function StatCard({ icon, label, value, trend }) {
         <h4 className="text-sm text-slate-400 font-medium">{label}</h4>
       </div>
       <div className="mt-auto pt-4 border-t border-white/5">
-         <p className="text-xs font-medium text-primary/90">{trend}</p>
+        <p className="text-xs font-medium text-primary/90">{trend}</p>
       </div>
     </motion.div>
   );
@@ -332,20 +323,16 @@ function TimelineItem({ title, date, icon, status }) {
   };
 
   return (
-    <div className="relative pl-10 md:pl-12 group mb-6 last:mb-0">
-      {/* Dot */}
-      <div className="absolute left-0 top-1.5 -translate-x-1/2 w-8 h-8 rounded-full bg-[#050505] flex items-center justify-center z-10 border-2 border-white/5">
-         <div className={cn("w-6 h-6 rounded-full border flex items-center justify-center", getStatusColor())}>
-            {icon}
-         </div>
-      </div>
-      
-      <div className="glass-card p-5 hover:bg-white/10 transition-colors shadow-sm border-white/5 group-hover:border-white/10">
-        <h4 className="font-bold text-white text-base leading-snug">{title}</h4>
-        <div className="flex items-center gap-2 mt-2.5 text-xs text-slate-400 font-medium">
-          <Calendar className="w-3.5 h-3.5" />
-          <span>{date}</span>
+    <div className="glass-card p-4 hover:bg-white/10 transition-colors shadow-sm border-white/5 group hover:border-white/10 flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <div className={cn("w-7 h-7 rounded-full border flex items-center justify-center shrink-0", getStatusColor())}>
+          {icon}
         </div>
+        <h4 className="font-bold text-white text-sm leading-snug">{title}</h4>
+      </div>
+      <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+        <Calendar className="w-3 h-3" />
+        <span>{date}</span>
       </div>
     </div>
   );
