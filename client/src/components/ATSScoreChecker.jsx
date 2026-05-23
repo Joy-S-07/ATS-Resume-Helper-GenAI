@@ -13,7 +13,8 @@ import {
   ChevronUp,
   Cpu,
   ShieldCheck,
-  LayoutTemplate
+  LayoutTemplate,
+  Briefcase
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ const ATSScoreChecker = () => {
   const [status, setStatus] = useState("idle"); // idle, analyzing, complete
   const [score, setScore] = useState(0);
   const [expandedSection, setExpandedSection] = useState(null);
+  const [jobRole, setJobRole] = useState("");
   
   const containerRef = useRef(null);
   const scannerRef = useRef(null);
@@ -133,13 +135,30 @@ const ATSScoreChecker = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           
           {/* LEFT: Upload / Scanning Area */}
-          <div className="ats-stagger flex flex-col h-full justify-center">
+          <div className="ats-stagger flex flex-col h-full justify-center gap-6">
+            <div className="w-full">
+              <label className="text-sm font-semibold tracking-wider uppercase text-slate-400 mb-2 block ml-1">Target Job Role</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  <Briefcase className="h-4 w-4 text-slate-400" />
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Senior Frontend Engineer"
+                  value={jobRole}
+                  onChange={(e) => setJobRole(e.target.value)}
+                  disabled={status !== "idle"}
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all placeholder-slate-600" 
+                />
+              </div>
+            </div>
+
             <div 
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               className={cn(
                 "relative flex flex-col items-center justify-center w-full h-80 rounded-2xl border-2 border-dashed transition-all overflow-hidden bg-[#111]/50 backdrop-blur-sm",
-                status === "idle" ? "border-slate-600 hover:border-emerald-400/50 hover:bg-emerald-400/5 cursor-pointer" : "border-slate-700/50 cursor-default"
+                status === "idle" && jobRole.trim().length > 0 ? "border-slate-600 hover:border-emerald-400/50 hover:bg-emerald-400/5 cursor-pointer" : "border-slate-700/50 cursor-not-allowed opacity-50"
               )}
             >
               <input 
@@ -148,7 +167,7 @@ const ATSScoreChecker = () => {
                 className="hidden" 
                 id="resume-upload" 
                 onChange={handleFileChange}
-                disabled={status !== "idle"}
+                disabled={status !== "idle" || jobRole.trim().length === 0}
               />
 
               {status === "idle" && (
@@ -158,7 +177,7 @@ const ATSScoreChecker = () => {
                   </div>
                   <p className="text-lg font-semibold text-white mb-2">Drag & Drop Resume</p>
                   <p className="text-sm text-slate-400 mb-6">Supports PDF, DOCX (Max 5MB)</p>
-                  <Button variant="outline" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 rounded-full px-6">
+                  <Button disabled={jobRole.trim().length === 0} variant="outline" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 rounded-full px-6">
                     Browse Files
                   </Button>
                 </label>
@@ -262,7 +281,7 @@ const ATSScoreChecker = () => {
                       {expandedSection === 'keywords' && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                           <div className="p-4 pt-0 text-sm border-t border-white/5">
-                            <p className="text-slate-400 mb-3">We found 18/20 critical keywords for a Senior Frontend role.</p>
+                            <p className="text-slate-400 mb-3">We found 18/20 critical keywords for {jobRole || "this role"}.</p>
                             <div className="flex flex-wrap gap-2">
                               <span className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded">React</span>
                               <span className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded">Next.js</span>
