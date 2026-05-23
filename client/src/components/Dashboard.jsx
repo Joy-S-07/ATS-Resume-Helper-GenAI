@@ -256,7 +256,7 @@ export default function Dashboard() {
           {
             label: "Create Resume",
             Icon: <FileText className="w-4 h-4 text-blue-400" />,
-            onClick: () => setActiveTab("resumes"),
+            onClick: () => router.push("/resume-builder"),
           },
           {
             label: "Add Job",

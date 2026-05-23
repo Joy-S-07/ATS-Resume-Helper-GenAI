@@ -16,6 +16,7 @@ function Navbar() {
 
   const navLinks = [
     { name: "ATS Checker", href: "ats-checker" },
+    { name: "Resume Builder", href: "resume-builder" },
     { name: "Interview Prep", href: "interview" },
     { name: "Roadmaps", href: "roadmaps" },
   ];

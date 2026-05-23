@@ -14,6 +14,7 @@ export const ROUTES = {
   RESUMES: "/resumes",
   JOB_TRACKER: "/job-tracker",
   INTERVIEW: "/interview",
+  RESUME_BUILDER: "/resume-builder",
 };
 
 // Example groups for middleware or layout checking
