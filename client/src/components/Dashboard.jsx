@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FallingPattern } from "@/components/ui/falling-pattern";
 import FloatingActionMenu from "@/components/ui/floating-action-menu";
 import ATSScoreChecker from "@/components/ATSScoreChecker";
-import { CheckCircle, FileText, Briefcase, User, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckCircle, FileText, Briefcase, User, LogOut, Bot } from "lucide-react";
 
 import SidebarProfile from "./dashboard/SidebarProfile";
 import SidebarNav from "./dashboard/SidebarNav";
@@ -15,6 +16,7 @@ import ResumesTab from "./dashboard/ResumesTab";
 import JobTrackerTab from "./dashboard/JobTrackerTab";
 
 export default function Dashboard() {
+  const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -265,6 +267,11 @@ export default function Dashboard() {
             label: "My Info",
             Icon: <User className="w-4 h-4 text-slate-300" />,
             onClick: () => setActiveTab("settings"),
+          },
+          {
+            label: "AI Interview",
+            Icon: <Bot className="w-4 h-4 text-blue-400" />,
+            onClick: () => router.push("/interview"),
           }
         ]}
       />

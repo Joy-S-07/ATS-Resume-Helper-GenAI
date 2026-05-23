@@ -13,6 +13,7 @@ export const ROUTES = {
   ATS_CHECKER: "/ats-checker",
   RESUMES: "/resumes",
   JOB_TRACKER: "/job-tracker",
+  INTERVIEW: "/interview",
 };
 
 // Example groups for middleware or layout checking
