@@ -134,7 +134,7 @@ export function Footer() {
           </div>
 
           {/* Top: Nav Columns */}
-          <div className="flex flex-row gap-10 sm:gap-[72px] pt-2 md:max-w-[60%] flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-8 sm:gap-[72px] pt-2 md:max-w-[60%] flex-wrap">
             <div className="flex flex-col">
               <h3
                 className={`${caveat.className} text-[24px] font-semibold italic text-muted-foreground mb-[18px]`}

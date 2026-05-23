@@ -44,8 +44,8 @@ function Hero() {
             </Button>
           </motion.div>
           
-          <div className="flex gap-4 flex-col items-center">
-            <motion.h1 variants={item} className="text-5xl md:text-7xl max-w-2xl tracking-tighter text-center font-regular">
+          <div className="flex gap-4 flex-col items-center px-4 sm:px-0">
+            <motion.h1 variants={item} className="text-4xl sm:text-5xl md:text-7xl max-w-2xl tracking-tighter text-center font-regular">
               Make your resume
             </motion.h1>
 
@@ -56,24 +56,24 @@ function Hero() {
                 morphTime={1}
                 cooldownTime={0.25}
                 className="font-bold"
-                textClassName="text-5xl md:text-7xl tracking-tighter"
+                textClassName="text-4xl sm:text-5xl md:text-7xl tracking-tighter"
               />
             </motion.div>
 
-            <motion.p variants={item} className="text-lg md:text-xl leading-relaxed tracking-tight text-muted-foreground max-w-2xl text-center">
+            <motion.p variants={item} className="text-base sm:text-lg md:text-xl leading-relaxed tracking-tight text-muted-foreground max-w-2xl text-center px-2">
               Upload your resume and instantly get your ATS compatibility score,
               AI-generated interview questions tailored to your role, and a
               personalized career roadmap — all in one platform.
             </motion.p>
           </div>
 
-          <motion.div variants={item} className="flex flex-row gap-3">
-            <Button size="lg" className="gap-4" variant="outline" asChild>
+          <motion.div variants={item} className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto px-6 sm:px-0 mt-4 sm:mt-0">
+            <Button size="lg" className="gap-4 w-full sm:w-auto" variant="outline" asChild>
               <Link href="#ats">
                 Check ATS Score <Upload className="w-4 h-4" />
               </Link>
             </Button>
-            <Button size="lg" className="gap-4" asChild>
+            <Button size="lg" className="gap-4 w-full sm:w-auto" asChild>
               <Link href="/login">
                 Get Started Free <MoveRight className="w-4 h-4" />
               </Link>

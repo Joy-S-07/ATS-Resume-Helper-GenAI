@@ -12,7 +12,7 @@ export function HeroScrollDemo() {
           <>
             <h1 className="text-4xl font-semibold text-foreground mb-4">
               Unlock Your Potential with <br />
-              <span className="text-4xl md:text-[6rem] font-bold mt-1 leading-none text-primary">
+              <span className="text-4xl sm:text-5xl md:text-[6rem] font-bold mt-1 leading-none text-primary">
                 AI Resume Analysis
               </span>
             </h1>
@@ -44,18 +44,7 @@ export function HeroScrollDemo() {
             draggable={false}
           />
           
-          {/* Placement Confirmed Stamp */}
-          <motion.div
-            initial={{ opacity: 0, scale: 3, rotate: -25 }}
-            whileInView={{ opacity: 1, scale: 1, rotate: -15 }}
-            transition={{ delay: 0.4, type: "spring", stiffness: 150, damping: 12 }}
-            viewport={{ once: true, margin: "50px" }}
-            className="absolute bottom-10 right-4 md:bottom-20 md:right-10 pointer-events-none z-50"
-          >
-            <div className="border-8 border-red-500 text-red-500 text-3xl md:text-5xl font-black uppercase px-6 py-3 rounded-xl backdrop-blur-sm bg-red-500/10 shadow-[0_0_20px_rgba(239,68,68,0.4)]">
-              Placement<br />Confirmed
-            </div>
-          </motion.div>
+
         </div>
       </ContainerScroll>
     </div>
