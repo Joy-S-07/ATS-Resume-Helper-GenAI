@@ -15,9 +15,9 @@ function Navbar() {
   }
 
   const navLinks = [
-    { name: "ATS Checker", href: "#ats" },
-    { name: "Interview Prep", href: "#interview" },
-    { name: "Roadmaps", href: "#roadmaps" },
+    { name: "ATS Checker", href: "ats-checker" },
+    { name: "Interview Prep", href: "interview" },
+    { name: "Roadmaps", href: "roadmaps" },
   ];
 
   return (
@@ -35,12 +35,13 @@ function Navbar() {
           <ul className="flex items-center gap-6 text-sm font-medium text-muted-foreground">
             {navLinks.map((link) => (
               <li key={link.name}>
-                <a
-                  href={link.href}
-                  className="hover:text-foreground transition-colors"
+                <Link
+                  href={`/${link.href}`}
+                  className="relative group text-muted-foreground hover:text-foreground transition-colors py-1"
                 >
                   {link.name}
-                </a>
+                  <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -74,13 +75,14 @@ function Navbar() {
           <ul className="flex flex-col gap-4 text-sm font-medium">
             {navLinks.map((link) => (
               <li key={link.name}>
-                <a
-                  href={link.href}
-                  className="block p-2 hover:bg-accent rounded-md text-foreground transition-colors"
+                <Link
+                  href={`/${link.href}`}
+                  className="relative group inline-block text-muted-foreground hover:text-foreground transition-colors py-1"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.name}
-                </a>
+                  <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </Link>
               </li>
             ))}
             <li>
