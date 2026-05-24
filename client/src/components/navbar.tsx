@@ -10,7 +10,7 @@ function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
-  if (pathname === "/login") {
+  if (["/login", "/signup", "/forgot-password"].includes(pathname)) {
     return null;
   }
 
