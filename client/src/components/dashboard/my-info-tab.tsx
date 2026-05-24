@@ -2,6 +2,43 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Mail, MapPin, Briefcase, CheckCircle, X, Plus, GraduationCap, Link as LinkIcon, Trash2, Loader2 } from "lucide-react";
 
+interface FormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  location: string;
+  experienceLevel: string;
+  bio: string;
+}
+
+interface MyInfoTabProps {
+  formData: FormData;
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>;
+  handleSave: (e: React.FormEvent) => void;
+  isSaving: boolean;
+  skills: string[];
+  newSkill: string;
+  setNewSkill: React.Dispatch<React.SetStateAction<string>>;
+  showSuggestions: boolean;
+  setShowSuggestions: React.Dispatch<React.SetStateAction<boolean>>;
+  filteredSuggestions: string[];
+  addSkill: (skill?: string) => void;
+  removeSkill: (skill: string) => void;
+  experiences: { id: number; title: string; company: string; duration: string }[];
+  addExperience: () => void;
+  removeExperience: (id: number) => void;
+  updateExperience: (id: number, field: string, value: string) => void;
+  education: { id: number; degree: string; institution: string; year: string }[];
+  addEducation: () => void;
+  removeEducation: (id: number) => void;
+  updateEducation: (id: number, field: string, value: string) => void;
+  links: { id: number; name: string; url: string; iconType: string }[];
+  addLink: () => void;
+  removeLink: (id: number) => void;
+  updateLink: (id: number, field: string, value: string) => void;
+}
+
 export default function MyInfoTab({
   formData,
   setFormData,
@@ -27,7 +64,7 @@ export default function MyInfoTab({
   addLink,
   removeLink,
   updateLink,
-}) {
+}: MyInfoTabProps) {
   return (
     <motion.div
       key="settings"

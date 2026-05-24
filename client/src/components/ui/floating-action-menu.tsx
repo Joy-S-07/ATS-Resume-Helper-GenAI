@@ -6,10 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+interface FloatingActionMenuOption {
+  label: string;
+  Icon: React.ReactNode;
+  onClick: () => void;
+}
+
+interface FloatingActionMenuProps {
+  options: FloatingActionMenuOption[];
+  className?: string;
+}
+
 const FloatingActionMenu = ({
   options,
   className,
-}) => {
+}: FloatingActionMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => {

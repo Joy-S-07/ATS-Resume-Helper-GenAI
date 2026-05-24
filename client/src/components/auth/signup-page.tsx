@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { CanvasRevealEffect } from "@/components/ui/login-page";
+import { CanvasRevealEffect } from "@/components/auth/login-page";
 import { Mail, Lock, User, ArrowRight, Loader2, ArrowLeft } from "lucide-react";
+import ROUTES from "@/routes";
 
 export function SignupPage() {
   const [name, setName] = useState("");
@@ -31,7 +32,7 @@ export function SignupPage() {
 
       {/* Back Button */}
       <Link
-        href="/"
+        href={ROUTES.HOME}
         className="absolute top-8 left-8 z-50 flex items-center justify-center p-3 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 backdrop-blur-md transition-all group hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]"
         aria-label="Back to landing page"
       >
@@ -201,7 +202,7 @@ export function SignupPage() {
           <div className="bg-white/5 border-t border-white/10 p-4 text-center relative z-10">
             <p className="text-xs text-slate-400">
               Already have an account?{" "}
-              <Link href="/login" className="relative group text-white/50 hover:text-white font-medium transition-colors inline-block ml-1">
+              <Link href={ROUTES.LOGIN} className="relative group text-white/50 hover:text-white font-medium transition-colors inline-block ml-1">
                 <span>Sign in</span>
                 <span className="absolute -bottom-0.5 left-0 w-full h-[1px] bg-white/70 scale-x-0 origin-left transition-transform duration-300 ease-out group-hover:scale-x-100"></span>
               </Link>

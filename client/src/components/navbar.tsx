@@ -5,20 +5,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Briefcase, Menu, X } from "lucide-react";
+import ROUTES, { AUTH_ROUTES } from "@/routes";
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
-  if (["/login", "/signup", "/forgot-password"].includes(pathname)) {
+  if (AUTH_ROUTES.includes(pathname as any)) {
     return null;
   }
 
   const navLinks = [
-    { name: "ATS Checker", href: "ats-checker" },
-    { name: "Resume Builder", href: "resume-builder" },
-    { name: "Interview Prep", href: "interview" },
-    { name: "Roadmaps", href: "roadmaps" },
+    { name: "ATS Checker", href: ROUTES.ATS_CHECKER },
+    { name: "Resume Builder", href: ROUTES.RESUME_BUILDER },
+    { name: "Interview Prep", href: ROUTES.INTERVIEW },
+    { name: "Roadmaps", href: ROUTES.ROADMAPS },
   ];
 
   return (
@@ -26,7 +27,7 @@ function Navbar() {
       <div className="container mx-auto px-4 md:px-8 flex items-center justify-between h-16">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl text-foreground">
+        <Link href={ROUTES.HOME} className="flex items-center gap-2 font-bold text-xl text-foreground">
           <Briefcase className="w-6 h-6 text-primary" />
           <span>CareerAI</span>
         </Link>
@@ -37,7 +38,7 @@ function Navbar() {
             {navLinks.map((link) => (
               <li key={link.name}>
                 <Link
-                  href={`/${link.href}`}
+                  href={link.href}
                   className="relative group text-muted-foreground hover:text-foreground transition-colors py-1"
                 >
                   {link.name}
@@ -48,7 +49,7 @@ function Navbar() {
           </ul>
           <div className="flex items-center gap-4">
             <Button asChild>
-              <Link href="/login">Sign In</Link>
+              <Link href={ROUTES.LOGIN}>Sign In</Link>
             </Button>
           </div>
         </div>
@@ -77,7 +78,7 @@ function Navbar() {
             {navLinks.map((link) => (
               <li key={link.name}>
                 <Link
-                  href={`/${link.href}`}
+                  href={link.href}
                   className="relative group inline-block text-muted-foreground hover:text-foreground transition-colors py-1"
                   onClick={() => setIsOpen(false)}
                 >
@@ -88,7 +89,7 @@ function Navbar() {
             ))}
             <li>
               <Button className="w-full mt-2" asChild>
-                <Link href="/login">Sign In</Link>
+                <Link href={ROUTES.LOGIN}>Sign In</Link>
               </Button>
             </li>
           </ul>

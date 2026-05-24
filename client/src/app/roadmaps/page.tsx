@@ -122,8 +122,8 @@ export default function RoadmapsPage() {
               {/* Skeleton / Loading State Animation */}
               {isGenerating && (
                 <motion.div
-                  initial={{ opacity: 0, mt: 0 }}
-                  animate={{ opacity: 1, mt: 40 }}
+                  initial={{ opacity: 0, y: 0 }}
+                  animate={{ opacity: 1, y: 20 }}
                   className="flex flex-col items-center justify-center space-y-4 text-muted-foreground"
                 >
                   <div className="relative">

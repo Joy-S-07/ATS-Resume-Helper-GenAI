@@ -20,15 +20,15 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const ATSScoreChecker = () => {
-  const [file, setFile] = useState(null);
-  const [status, setStatus] = useState("idle"); // idle, analyzing, complete
+  const [file, setFile] = useState<File | null>(null);
+  const [status, setStatus] = useState<"idle" | "analyzing" | "complete">("idle");
   const [score, setScore] = useState(0);
-  const [expandedSection, setExpandedSection] = useState(null);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [jobRole, setJobRole] = useState("");
   
-  const containerRef = useRef(null);
-  const scannerRef = useRef(null);
-  const scoreTextRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scannerRef = useRef<HTMLDivElement>(null);
+  const scoreTextRef = useRef<HTMLSpanElement>(null);
 
   // Initial Entrance Animation
   useEffect(() => {
@@ -39,24 +39,24 @@ const ATSScoreChecker = () => {
     );
   }, []);
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       processFile(e.dataTransfer.files[0]);
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       processFile(e.target.files[0]);
     }
   };
 
-  const processFile = (selectedFile) => {
+  const processFile = (selectedFile: File) => {
     setFile(selectedFile);
     setStatus("analyzing");
 
@@ -84,7 +84,7 @@ const ATSScoreChecker = () => {
     }, 3000);
   };
 
-  const animateScore = (targetScore) => {
+  const animateScore = (targetScore: number) => {
     const obj = { value: 0 };
     gsap.to(obj, {
       value: targetScore,
@@ -96,19 +96,19 @@ const ATSScoreChecker = () => {
     });
   };
 
-  const getScoreColor = (s) => {
+  const getScoreColor = (s: number) => {
     if (s >= 76) return "text-emerald-400 stroke-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.5)]";
     if (s >= 51) return "text-amber-400 stroke-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]";
     return "text-red-400 stroke-red-400 drop-shadow-[0_0_15px_rgba(248,113,113,0.5)]";
   };
   
-  const getScoreBgColor = (s) => {
+  const getScoreBgColor = (s: number) => {
     if (s >= 76) return "bg-emerald-500/10";
     if (s >= 51) return "bg-amber-500/10";
     return "bg-red-500/10";
   };
 
-  const toggleSection = (section) => {
+  const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 

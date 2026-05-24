@@ -1,8 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { FileText, CheckCircle, Eye, Briefcase, TrendingUp, Activity } from "lucide-react";
-import StatCard from "./StatCard";
-import TimelineItem from "./TimelineItem";
+import StatCard from "./stat-card";
+import TimelineItem from "./timeline-item";
 
 export default function OverviewTab() {
   return (

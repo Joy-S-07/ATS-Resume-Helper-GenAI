@@ -2,7 +2,27 @@ import React from "react";
 import { motion } from "framer-motion";
 import { User, Mail, MapPin, Link as LinkIcon } from "lucide-react";
 
-export default function SidebarProfile({ profile, links }) {
+interface ProfileData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  location: string;
+}
+
+interface LinkData {
+  id: number;
+  name: string;
+  url: string;
+  iconType: string;
+}
+
+interface SidebarProfileProps {
+  profile: ProfileData;
+  links: LinkData[];
+}
+
+export default function SidebarProfile({ profile, links }: SidebarProfileProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

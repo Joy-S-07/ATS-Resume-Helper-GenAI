@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { GooeyText } from "@/components/ui/gooey-text-morphing";
 import { InteractiveDotGrid } from "@/components/ui/interactive-dot-grid";
 import Link from "next/link";
+import ROUTES from "@/routes";
 import { motion } from "framer-motion";
 
 function Hero() {
@@ -21,7 +22,7 @@ function Hero() {
 
   const item = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } },
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 100, damping: 15 } },
   };
 
   return (
@@ -74,7 +75,7 @@ function Hero() {
               </Link>
             </Button>
             <Button size="lg" className="gap-4 w-full sm:w-auto" asChild>
-              <Link href="/login">
+              <Link href={ROUTES.LOGIN}>
                 Get Started Free <MoveRight className="w-4 h-4" />
               </Link>
             </Button>

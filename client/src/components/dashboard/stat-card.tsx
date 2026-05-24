@@ -1,7 +1,14 @@
 import React from "react";
 import { motion } from "framer-motion";
 
-export default function StatCard({ icon, label, value, trend }) {
+interface StatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  trend: string;
+}
+
+export default function StatCard({ icon, label, value, trend }: StatCardProps) {
   return (
     <motion.div
       whileHover={{ y: -2 }}

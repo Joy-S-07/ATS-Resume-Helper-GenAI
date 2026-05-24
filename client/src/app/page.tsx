@@ -14,6 +14,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import ROUTES from "@/routes";
 import { HeroScrollDemo } from "@/components/ui/hero-scroll-demo";
 import { Footer } from "@/components/ui/footer";
 
@@ -196,7 +197,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center w-full">
             <Button size="lg" className="gap-3 w-full sm:w-auto" asChild>
-              <Link href="/register">
+              <Link href={ROUTES.SIGNUP}>
                 Get Started Free <MoveRight className="w-4 h-4" />
               </Link>
             </Button>

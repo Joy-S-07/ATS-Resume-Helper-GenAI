@@ -1,5 +1,5 @@
 import React from "react";
-import ATSScoreChecker from "@/components/ATSScoreChecker";
+import ATSScoreChecker from "@/components/ats-checker/ats-score-checker";
 
 export default function ATSCheckerPage() {
   return (

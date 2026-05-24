@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { Mail, Lock, ArrowRight, Loader2, ArrowLeft } from "lucide-react";
+import ROUTES from "@/routes";
 
 type Uniforms = {
   [key: string]: {
@@ -373,7 +374,7 @@ export function LoginPage() {
 
       {/* Back Button */}
       <Link 
-        href="/" 
+        href={ROUTES.HOME}
         className="absolute top-8 left-8 z-50 flex items-center justify-center p-3 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 backdrop-blur-md transition-all group hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]"
         aria-label="Back to landing page"
       >
@@ -433,7 +434,7 @@ export function LoginPage() {
               <div className="space-y-1">
                 <div className="flex items-center justify-between ml-1">
                   <label className="text-xs font-medium text-slate-300">Password</label>
-                  <Link href="/forgot-password" className="relative group text-xs text-white/50 hover:text-white transition-colors">
+                  <Link href={ROUTES.FORGOT_PASSWORD} className="relative group text-xs text-white/50 hover:text-white transition-colors">
                     <span>Forgot password?</span>
                     <span className="absolute -bottom-0.5 left-0 w-full h-[1px] bg-white/70 scale-x-0 origin-left transition-transform duration-300 ease-out group-hover:scale-x-100"></span>
                   </Link>
@@ -513,7 +514,7 @@ export function LoginPage() {
           <div className="bg-white/5 border-t border-white/10 p-4 text-center relative z-10">
             <p className="text-xs text-slate-400">
               Don&apos;t have an account?{" "}
-              <Link href="/signup" className="relative group text-white/50 hover:text-white font-medium transition-colors inline-block ml-1">
+              <Link href={ROUTES.SIGNUP} className="relative group text-white/50 hover:text-white font-medium transition-colors inline-block ml-1">
                 <span>Sign up</span>
                 <span className="absolute -bottom-0.5 left-0 w-full h-[1px] bg-white/70 scale-x-0 origin-left transition-transform duration-300 ease-out group-hover:scale-x-100"></span>
               </Link>

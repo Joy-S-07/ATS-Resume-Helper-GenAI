@@ -4,16 +4,17 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FallingPattern } from "@/components/ui/falling-pattern";
 import FloatingActionMenu from "@/components/ui/floating-action-menu";
-import ATSScoreChecker from "@/components/ATSScoreChecker";
+import ATSScoreChecker from "@/components/ats-checker/ats-score-checker";
 import { useRouter } from "next/navigation";
 import { CheckCircle, FileText, Briefcase, User, LogOut, Bot } from "lucide-react";
 
-import SidebarProfile from "./dashboard/SidebarProfile";
-import SidebarNav from "./dashboard/SidebarNav";
-import OverviewTab from "./dashboard/OverviewTab";
-import MyInfoTab from "./dashboard/MyInfoTab";
-import ResumesTab from "./dashboard/ResumesTab";
-import JobTrackerTab from "./dashboard/JobTrackerTab";
+import SidebarProfile from "./sidebar-profile";
+import SidebarNav from "./sidebar-nav";
+import OverviewTab from "./overview-tab";
+import MyInfoTab from "./my-info-tab";
+import ResumesTab from "./resumes-tab";
+import JobTrackerTab from "./job-tracker-tab";
+import ROUTES from "@/routes";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -106,7 +107,7 @@ export default function Dashboard() {
       ).slice(0, 6)
     : [];
 
-  const addSkill = (skill) => {
+  const addSkill = (skill?: string) => {
     const toAdd = skill || newSkill.trim();
     if (toAdd && !skills.includes(toAdd)) {
       setSkills([...skills, toAdd]);
@@ -115,7 +116,7 @@ export default function Dashboard() {
     }
   };
 
-  const removeSkill = (skillToRemove) => {
+  const removeSkill = (skillToRemove: string) => {
     setSkills(skills.filter((s) => s !== skillToRemove));
   };
 
@@ -123,11 +124,11 @@ export default function Dashboard() {
     setExperiences([...experiences, { id: Date.now(), title: "", company: "", duration: "" }]);
   };
 
-  const removeExperience = (id) => {
+  const removeExperience = (id: number) => {
     setExperiences(experiences.filter((e) => e.id !== id));
   };
 
-  const updateExperience = (id, field, value) => {
+  const updateExperience = (id: number, field: string, value: string) => {
     setExperiences(experiences.map((e) => e.id === id ? { ...e, [field]: value } : e));
   };
 
@@ -135,11 +136,11 @@ export default function Dashboard() {
     setEducation([...education, { id: Date.now(), degree: "", institution: "", year: "" }]);
   };
 
-  const removeEducation = (id) => {
+  const removeEducation = (id: number) => {
     setEducation(education.filter((e) => e.id !== id));
   };
 
-  const updateEducation = (id, field, value) => {
+  const updateEducation = (id: number, field: string, value: string) => {
     setEducation(education.map((e) => e.id === id ? { ...e, [field]: value } : e));
   };
 
@@ -147,11 +148,11 @@ export default function Dashboard() {
     setLinks([...links, { id: Date.now(), name: "", url: "", iconType: "link" }]);
   };
 
-  const removeLink = (id) => {
+  const removeLink = (id: number) => {
     setLinks(links.filter((l) => l.id !== id));
   };
 
-  const updateLink = (id, field, value) => {
+  const updateLink = (id: number, field: string, value: string) => {
     setLinks(links.map((l) => l.id === id ? { ...l, [field]: value } : l));
   };
 
@@ -159,7 +160,7 @@ export default function Dashboard() {
     setIsClient(true);
   }, []);
 
-  const handleSave = (e) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setTimeout(() => {
@@ -256,7 +257,7 @@ export default function Dashboard() {
           {
             label: "Create Resume",
             Icon: <FileText className="w-4 h-4 text-blue-400" />,
-            onClick: () => router.push("/resume-builder"),
+            onClick: () => router.push(ROUTES.RESUME_BUILDER),
           },
           {
             label: "Add Job",
@@ -271,7 +272,7 @@ export default function Dashboard() {
           {
             label: "AI Interview",
             Icon: <Bot className="w-4 h-4 text-blue-400" />,
-            onClick: () => router.push("/interview"),
+            onClick: () => router.push(ROUTES.INTERVIEW),
           }
         ]}
       />

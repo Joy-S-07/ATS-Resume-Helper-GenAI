@@ -2,7 +2,14 @@ import React from "react";
 import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function TimelineItem({ title, date, icon, status }) {
+interface TimelineItemProps {
+  title: string;
+  date: string;
+  icon: React.ReactNode;
+  status: string;
+}
+
+export default function TimelineItem({ title, date, icon, status }: TimelineItemProps) {
   const getStatusColor = () => {
     switch (status) {
       case "success": return "bg-emerald-500/10 border-emerald-500/50 text-emerald-400";

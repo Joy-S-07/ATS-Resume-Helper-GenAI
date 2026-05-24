@@ -3,7 +3,12 @@ import { motion } from "framer-motion";
 import { Activity, Settings, FileText, Briefcase, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function SidebarNav({ activeTab, setActiveTab }) {
+interface SidebarNavProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+}
+
+export default function SidebarNav({ activeTab, setActiveTab }: SidebarNavProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
