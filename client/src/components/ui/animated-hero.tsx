@@ -31,7 +31,7 @@ function Hero() {
       <InteractiveDotGrid />
 
       <div className="container mx-auto">
-        <motion.div 
+        <motion.div
           className="flex gap-8 py-20 lg:py-40 items-center justify-center flex-col relative z-10"
           variants={container}
           initial="hidden"
@@ -39,12 +39,12 @@ function Hero() {
         >
           <motion.div variants={item}>
             <Button variant="secondary" size="sm" className="gap-4" asChild>
-              <Link href="#ats">
+              <Link href="ats-checker">
                 AI-Powered Resume Analysis <MoveRight className="w-4 h-4" />
               </Link>
             </Button>
           </motion.div>
-          
+
           <div className="flex gap-4 flex-col items-center px-4 sm:px-0">
             <motion.h1 variants={item} className="text-4xl sm:text-5xl md:text-7xl max-w-2xl tracking-tighter text-center font-regular">
               Make your resume
