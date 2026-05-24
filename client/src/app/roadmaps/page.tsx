@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight, Briefcase, Loader2, Map } from 'lucide-react';
-import { DottedSurface } from '@/components/ui/dotted-surface';
+import { GLSLHills } from '@/components/ui/glsl-hills';
 import Plan, { Task } from '@/components/ui/agent-plan';
 import { cn } from '@/lib/utils';
 
@@ -40,7 +40,9 @@ export default function RoadmapsPage() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background">
       {/* Background Component */}
-      <DottedSurface className="size-full z-0" />
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <GLSLHills width="100%" height="100%" />
+      </div>
 
       {/* Decorative gradient blur */}
       <div
