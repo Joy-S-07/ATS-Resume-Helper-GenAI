@@ -91,17 +91,6 @@ export function DottedSurface({ className, ...props }: DottedSurfaceProps) {
 		const points = new THREE.Points(geometry, material);
 		scene.add(points);
 
-		const pointer = new THREE.Vector2(-9999, -9999);
-		const raycaster = new THREE.Raycaster();
-		const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-		const target = new THREE.Vector3();
-
-		const onPointerMove = (event: PointerEvent) => {
-			pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-			pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
-		};
-		window.addEventListener('pointermove', onPointerMove as EventListener);
-
 		let count = 0;
 		let animationId: number;
 
@@ -112,42 +101,15 @@ export function DottedSurface({ className, ...props }: DottedSurfaceProps) {
 			const positionAttribute = geometry.attributes.position;
 			const positions = positionAttribute.array as Float32Array;
 
-			raycaster.setFromCamera(pointer, camera);
-			const hit = raycaster.ray.intersectPlane(plane, target);
-			const radius = 800;
-			const radiusSq = radius * radius;
-
 			let i = 0;
 			for (let ix = 0; ix < AMOUNTX; ix++) {
 				for (let iy = 0; iy < AMOUNTY; iy++) {
 					const index = i * 3;
 
-					let x = ix * SEPARATION - (AMOUNTX * SEPARATION) / 2;
-					let z = iy * SEPARATION - (AMOUNTY * SEPARATION) / 2;
-
-					if (hit) {
-						const dx = x - target.x;
-						if (Math.abs(dx) < radius) {
-							const dz = z - target.z;
-							if (Math.abs(dz) < radius) {
-								const distSq = dx * dx + dz * dz;
-								if (distSq < radiusSq) {
-									const dist = Math.sqrt(distSq) || 0.1;
-									const force = (radius - dist) / radius;
-									// Scatter outward
-									x += (dx / dist) * force * 350;
-									z += (dz / dist) * force * 350;
-								}
-							}
-						}
-					}
-
-					positions[index] = x;
 					// Animate Y position with sine waves
 					positions[index + 1] =
 						Math.sin((ix + count) * 0.3) * 50 +
 						Math.sin((iy + count) * 0.5) * 50;
-					positions[index + 2] = z;
 
 					i++;
 				}
@@ -181,7 +143,6 @@ export function DottedSurface({ className, ...props }: DottedSurfaceProps) {
 
 		// Cleanup function
 		return () => {
-			window.removeEventListener('pointermove', onPointerMove as EventListener);
 			window.removeEventListener('resize', handleResize);
 			cancelAnimationFrame(animationId);
 
