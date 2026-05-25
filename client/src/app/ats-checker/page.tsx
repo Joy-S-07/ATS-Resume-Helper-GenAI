@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import ATSScoreChecker from "@/components/ats-checker/ats-score-checker";
 import { SplineScene } from "@/components/ui/splite";
 import { Card } from "@/components/ui/card";

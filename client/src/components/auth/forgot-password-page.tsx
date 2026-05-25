@@ -17,7 +17,6 @@ export function ForgotPasswordPage() {
     e.preventDefault();
     setIsLoading(true);
     // TODO: Implement password reset logic
-    console.log("Password reset requested for", email);
     setTimeout(() => {
       setIsLoading(false);
       setIsSubmitted(true);

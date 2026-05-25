@@ -23,7 +23,6 @@ export function SignupPage() {
     }
     setIsLoading(true);
     // TODO: Implement signup logic
-    console.log("Signing up with", name, email, password);
     setTimeout(() => setIsLoading(false), 1500);
   };
 

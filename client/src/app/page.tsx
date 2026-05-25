@@ -11,7 +11,6 @@ import {
   LayoutGrid,
   MoveRight,
   CheckCircle,
-  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import ROUTES from "@/routes";

@@ -1,6 +1,4 @@
-import React from "react";
 import ResumeBuilderContainer from "@/components/resume-builder/ResumeBuilderContainer";
-import { Sparkles, FileCode2 } from "lucide-react";
 import ProceduralGroundBackground from "@/components/ui/animated-pattern-cloud";
 
 export default function ResumeBuilderPage() {

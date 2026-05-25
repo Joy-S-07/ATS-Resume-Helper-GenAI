@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 import {
-  UploadCloud,
   FileText,
   CheckCircle,
   XCircle,

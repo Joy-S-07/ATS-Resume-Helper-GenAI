@@ -365,7 +365,6 @@ export function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     // TODO: Implement JWT login logic
-    console.log("Logging in with", email, password);
     setTimeout(() => setIsLoading(false), 1500);
   };
 

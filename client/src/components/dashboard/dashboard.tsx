@@ -6,7 +6,7 @@ import { FallingPattern } from "@/components/ui/falling-pattern";
 import FloatingActionMenu from "@/components/ui/floating-action-menu";
 import ATSScoreChecker from "@/components/ats-checker/ats-score-checker";
 import { useRouter } from "next/navigation";
-import { CheckCircle, FileText, Briefcase, User, LogOut, Bot } from "lucide-react";
+import { CheckCircle, FileText, Briefcase, User, Bot } from "lucide-react";
 
 import SidebarProfile from "./sidebar-profile";
 import SidebarNav from "./sidebar-nav";
