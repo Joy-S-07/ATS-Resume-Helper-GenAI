@@ -17,7 +17,8 @@ import {
   Trash2,
   Download,
   Eye,
-  Sparkles
+  Sparkles,
+  Layout
 } from "lucide-react";
 import Link from "next/link";
 import ROUTES from "@/routes";
@@ -61,6 +62,7 @@ interface ResumeData {
 export default function ResumeBuilderContainer() {
   const [activeTab, setActiveTab] = useState<"upload" | "manual" | "latex">("upload");
   const [latexCode, setLatexCode] = useState("");
+  const [hasGenerated, setHasGenerated] = useState(false);
   
   const [resumeData, setResumeData] = useState<ResumeData>({
     templateStyle: "modern",
@@ -121,74 +123,59 @@ export default function ResumeBuilderContainer() {
 \\end{center}
 
 \\end{document}`;
-    
     setLatexCode(latex);
-    setActiveTab("latex");
+    setHasGenerated(true);
   };
 
   return (
     <div className="w-full relative z-10 flex flex-col h-[calc(100vh-140px)] min-h-[700px]">
       
-      {/* Navigation & Tab Controls */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Link 
-            href={ROUTES.DASHBOARD}
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 hover:bg-white/10 transition-all hover:scale-105 shrink-0"
-          >
-            <ArrowLeft className="w-5 h-5 text-white" />
-          </Link>
-          
-          <div className="flex p-1 bg-white/5 border border-white/10 rounded-xl backdrop-blur-sm">
-            <button
-              onClick={() => setActiveTab("upload")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                activeTab === "upload" 
-                  ? "bg-white text-black shadow-lg" 
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Upload className="w-4 h-4" />
-              Upload Resume
-            </button>
-            <button
-              onClick={() => setActiveTab("manual")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                activeTab === "manual" 
-                  ? "bg-white text-black shadow-lg" 
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              Build Manually
-            </button>
-            <button
-              onClick={() => setActiveTab("latex")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                activeTab === "latex" 
-                  ? "bg-white text-black shadow-lg" 
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Code className="w-4 h-4" />
-              LaTeX Editor
-            </button>
+      {/* Top Bar */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+            <FileText className="w-5 h-5 text-white" />
           </div>
+          <h1 className="text-xl font-bold text-white tracking-tight">ATS Resume Builder</h1>
         </div>
-
-        <button className="px-4 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/30 transition-all flex items-center gap-2 font-medium">
+        
+        <button className="px-6 py-2.5 bg-white text-black font-medium rounded-xl hover:bg-gray-200 transition-all flex items-center gap-2 shadow-lg shadow-white/10">
           <Download className="w-4 h-4" />
-          Export PDF
+          Download Resume
         </button>
       </div>
 
-
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 flex-1 min-h-0">
         
-        {/* Left Panel - Input Area */}
-        <div className="glass-card flex flex-col h-full rounded-2xl border border-white/10 overflow-hidden backdrop-blur-md bg-black/60 shadow-2xl">
-          <div className="p-6 flex-1 overflow-y-auto">
+        {/* Left Section */}
+        <div className="flex flex-col h-full min-h-0 lg:col-span-3">
+          
+          {/* Chrome-like Tabs */}
+          <div className="flex px-4 gap-1 z-10 relative -mb-px">
+            {[
+              { id: "upload", icon: Upload, label: "Upload Resume" },
+              { id: "manual", icon: FileText, label: "Build Manually" },
+              { id: "latex", icon: Code, label: "LaTeX Editor" }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-4 py-3 rounded-t-xl text-sm font-medium transition-all flex items-center gap-2 border-x border-t ${
+                  activeTab === tab.id 
+                    ? "bg-[#111111]/90 backdrop-blur-md border-white/10 border-b-[#111111]/90 text-white z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.2)]" 
+                    : "bg-black/20 border-transparent text-slate-400 hover:text-white hover:bg-black/40 z-0"
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Left Panel - Input Area */}
+          <div className="glass-card flex flex-col flex-1 rounded-2xl border border-white/10 overflow-hidden backdrop-blur-md bg-[#111111]/90 shadow-2xl z-10 relative">
+            <div className="p-6 flex-1 overflow-y-auto">
             <AnimatePresence mode="wait">
               
               {/* Upload Tab */}
@@ -201,15 +188,15 @@ export default function ResumeBuilderContainer() {
                   transition={{ duration: 0.3 }}
                   className="flex flex-col items-center justify-center h-full text-center"
                 >
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 flex items-center justify-center mb-6">
-                    <Upload className="w-10 h-10 text-blue-400" />
+                  <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/20 flex items-center justify-center mb-6">
+                    <Upload className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-white mb-3">Upload Your Resume</h3>
                   <p className="text-slate-400 max-w-md mb-8">
                     Drop your PDF or DOCX resume here, and we'll extract all the information automatically using AI.
                   </p>
                   
-                  <div className="w-full max-w-md border-2 border-dashed border-white/20 rounded-2xl p-12 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all cursor-pointer">
+                  <div className="w-full max-w-md border-2 border-dashed border-white/20 rounded-2xl p-12 hover:border-white/50 hover:bg-white/5 transition-all cursor-pointer">
                     <div className="flex flex-col items-center gap-3">
                       <FileText className="w-12 h-12 text-slate-500" />
                       <p className="text-sm text-slate-400">
@@ -240,26 +227,26 @@ export default function ResumeBuilderContainer() {
                   {/* Choose Template Style */}
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-slate-400" />
+                      <Layout className="w-4 h-4 text-slate-400" />
                       <h3 className="text-sm font-semibold text-white">Choose Template Style</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {[
-                        { id: "modern", name: "Modern", desc: "Two column" },
+                        { id: "modern", name: "Modern", desc: "Two columns" },
                         { id: "classic", name: "Classic", desc: "Traditional" },
                         { id: "minimal", name: "Minimal", desc: "Clean & simple" }
                       ].map(template => (
                         <div 
                           key={template.id}
                           onClick={() => setResumeData({...resumeData, templateStyle: template.id as any})}
-                          className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                          className={`p-5 rounded-xl border cursor-pointer transition-all flex flex-col items-center justify-center gap-1.5 ${
                             resumeData.templateStyle === template.id 
-                              ? 'border-orange-500 bg-orange-500/10' 
+                              ? 'border-white bg-white/10' 
                               : 'border-white/10 bg-white/5 hover:border-white/20'
                           }`}
                         >
-                          <h4 className={`font-semibold ${resumeData.templateStyle === template.id ? 'text-orange-400' : 'text-white'}`}>{template.name}</h4>
-                          <p className="text-xs text-slate-400 mt-1">{template.desc}</p>
+                          <h4 className={`text-sm font-semibold ${resumeData.templateStyle === template.id ? 'text-white' : 'text-slate-300'}`}>{template.name}</h4>
+                          <p className={`text-xs ${resumeData.templateStyle === template.id ? 'text-slate-300' : 'text-slate-500'}`}>{template.desc}</p>
                         </div>
                       ))}
                     </div>
@@ -268,7 +255,7 @@ export default function ResumeBuilderContainer() {
                   {/* Profile Photo */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-white">Profile Photo <span className="text-slate-500 font-normal">(optional)</span></h3>
-                    <div className="w-full border-2 border-dashed border-white/20 rounded-2xl p-8 hover:border-orange-500/50 hover:bg-orange-500/5 transition-all cursor-pointer flex flex-col items-center justify-center gap-3">
+                    <div className="w-full border-2 border-dashed border-white/20 rounded-2xl p-8 hover:border-white/50 hover:bg-white/5 transition-all cursor-pointer flex flex-col items-center justify-center gap-3">
                       <div className="p-3 bg-white/5 rounded-full">
                         <Upload className="w-6 h-6 text-slate-400" />
                       </div>
@@ -287,7 +274,7 @@ export default function ResumeBuilderContainer() {
                         type="text" 
                         value={resumeData.personalInfo.name}
                         onChange={(e) => setResumeData({...resumeData, personalInfo: { ...resumeData.personalInfo, name: e.target.value }})}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 focus:bg-white/10 transition-all"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-all"
                         placeholder="Basil Hailward"
                       />
                     </div>
@@ -298,7 +285,7 @@ export default function ResumeBuilderContainer() {
                         type="text" 
                         value={resumeData.personalInfo.title}
                         onChange={(e) => setResumeData({...resumeData, personalInfo: { ...resumeData.personalInfo, title: e.target.value }})}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 focus:bg-white/10 transition-all"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-all"
                         placeholder="UI/UX Designer"
                       />
                     </div>
@@ -309,7 +296,7 @@ export default function ResumeBuilderContainer() {
                         type="tel" 
                         value={resumeData.personalInfo.phone}
                         onChange={(e) => setResumeData({...resumeData, personalInfo: { ...resumeData.personalInfo, phone: e.target.value }})}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 focus:bg-white/10 transition-all"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-all"
                         placeholder="+00 000 0000 0000"
                       />
                     </div>
@@ -320,7 +307,7 @@ export default function ResumeBuilderContainer() {
                         type="email" 
                         value={resumeData.personalInfo.email}
                         onChange={(e) => setResumeData({...resumeData, personalInfo: { ...resumeData.personalInfo, email: e.target.value }})}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 focus:bg-white/10 transition-all"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-all"
                         placeholder="www.lorem.example.com"
                       />
                     </div>
@@ -331,7 +318,7 @@ export default function ResumeBuilderContainer() {
                         type="text" 
                         value={resumeData.personalInfo.address}
                         onChange={(e) => setResumeData({...resumeData, personalInfo: { ...resumeData.personalInfo, address: e.target.value }})}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 focus:bg-white/10 transition-all"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-all"
                         placeholder="123 Street Name City Name, State, Country, 12345"
                       />
                     </div>
@@ -342,7 +329,7 @@ export default function ResumeBuilderContainer() {
                         type="text" 
                         value={resumeData.personalInfo.dob}
                         onChange={(e) => setResumeData({...resumeData, personalInfo: { ...resumeData.personalInfo, dob: e.target.value }})}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 focus:bg-white/10 transition-all"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-all"
                         placeholder="dd/mm/yyyy"
                       />
                     </div>
@@ -353,7 +340,7 @@ export default function ResumeBuilderContainer() {
                         type="text" 
                         value={resumeData.personalInfo.hobbies}
                         onChange={(e) => setResumeData({...resumeData, personalInfo: { ...resumeData.personalInfo, hobbies: e.target.value }})}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 focus:bg-white/10 transition-all"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-all"
                         placeholder="Photography, Reading, Traveling, etc."
                       />
                     </div>
@@ -364,7 +351,7 @@ export default function ResumeBuilderContainer() {
                         value={resumeData.summary}
                         onChange={(e) => setResumeData({ ...resumeData, summary: e.target.value })}
                         rows={4}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500/50 focus:bg-white/10 transition-all resize-none"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-all resize-none"
                         placeholder="Write a brief professional summary highlighting your key achievements and career goals..."
                       />
                     </div>
@@ -383,7 +370,7 @@ export default function ResumeBuilderContainer() {
                         <h3 className="text-sm font-semibold text-white">{section.label}</h3>
                         <button 
                           onClick={() => addItem(section.id, { name: "", company: "", institution: "" })}
-                          className="px-4 py-1.5 border border-orange-500 text-orange-500 rounded-full text-xs font-medium hover:bg-orange-500/10 transition-all flex items-center gap-1.5"
+                          className="px-4 py-1.5 border border-white/30 text-white rounded-full text-xs font-medium hover:bg-white/10 transition-all flex items-center gap-1.5"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           {section.btnText}
@@ -411,14 +398,24 @@ export default function ResumeBuilderContainer() {
                   ))}
 
                   {/* Generate Button */}
-                  <div className="pt-8">
+                  <div className="pt-8 space-y-3">
                     <button 
                       onClick={generateLatex}
-                      className="w-full px-6 py-4 bg-orange-600 text-white font-semibold rounded-xl hover:bg-orange-700 transition-all shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2"
+                      className="w-full px-6 py-4 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition-all shadow-lg shadow-white/10 flex items-center justify-center gap-2"
                     >
                       <FileText className="w-5 h-5" />
                       Generate Resume
                     </button>
+                    
+                    {hasGenerated && (
+                      <button 
+                        onClick={() => setActiveTab("latex")}
+                        className="w-full px-6 py-3 bg-white/5 border border-white/10 text-white font-medium rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Code className="w-4 h-4" />
+                        Edit LaTeX Code
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -436,8 +433,8 @@ export default function ResumeBuilderContainer() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
-                        <Code className="w-5 h-5 text-green-400" />
+                      <div className="p-2 bg-white/10 border border-white/20 rounded-lg">
+                        <Code className="w-5 h-5 text-white" />
                       </div>
                       <div>
                         <h3 className="text-lg font-bold text-white">LaTeX Editor</h3>
@@ -445,7 +442,7 @@ export default function ResumeBuilderContainer() {
                       </div>
                     </div>
                     
-                    <button className="px-3 py-1.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-500/30 transition-all text-sm font-medium flex items-center gap-2">
+                    <button className="px-3 py-1.5 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-all text-sm font-medium flex items-center gap-2">
                       <Eye className="w-4 h-4" />
                       Compile
                     </button>
@@ -454,7 +451,7 @@ export default function ResumeBuilderContainer() {
                   <textarea 
                     value={latexCode}
                     onChange={(e) => setLatexCode(e.target.value)}
-                    className="flex-1 w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-green-400 font-mono text-sm focus:outline-none focus:border-green-500/50 resize-none"
+                    className="flex-1 w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-slate-300 font-mono text-sm focus:outline-none focus:border-white/50 resize-none"
                     placeholder="% Your LaTeX code will appear here..."
                     spellCheck={false}
                   />
@@ -464,43 +461,43 @@ export default function ResumeBuilderContainer() {
             </AnimatePresence>
           </div>
         </div>
+        </div>
 
 
         {/* Right Panel - PDF Preview */}
-        <div className="glass-card flex flex-col h-full rounded-2xl border border-white/10 overflow-hidden relative backdrop-blur-md bg-black/60 shadow-2xl">
-          {/* Preview Header */}
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10">
-            <div className="px-4 py-2 bg-black/60 backdrop-blur-xl border border-white/20 rounded-full shadow-2xl">
-              <span className="text-xs font-bold tracking-wider uppercase text-white flex items-center gap-2">
-                <Eye className="w-4 h-4" />
-                PDF Preview
-              </span>
-            </div>
+        <div className="glass-card flex flex-col h-full lg:col-span-2 rounded-2xl border border-white/10 overflow-hidden relative backdrop-blur-md bg-[#111111]/90 shadow-2xl">
+          
+          {/* Header */}
+          <div className="p-6 border-b border-white/10 w-full shrink-0">
+            <h2 className="text-xl font-bold text-white mb-1">Resume Preview</h2>
+            <p className="text-sm text-slate-400">Live preview of your resume - {resumeData.templateStyle.charAt(0).toUpperCase() + resumeData.templateStyle.slice(1)} style</p>
           </div>
           
           {/* Preview Content */}
-          <div className="flex-1 bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] m-3 mt-16 rounded-xl border border-white/5 flex items-center justify-center relative overflow-hidden">
-            {/* Decorative Grid */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute inset-0" style={{
-                backgroundImage: `
-                  linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)
-                `,
-                backgroundSize: '50px 50px'
-              }} />
-            </div>
-            
-            {/* Placeholder Content */}
-            <div className="text-center z-10">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center">
-                <FileText className="w-8 h-8 text-slate-500" />
+          <div className="flex-1 flex items-center justify-center p-6 relative w-full overflow-hidden">
+            {hasGenerated ? (
+              <div className="w-full max-w-[420px] aspect-[1/1.414] bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] rounded-xl border border-white/5 flex flex-col relative overflow-hidden shadow-2xl">
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: `
+                      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)
+                    `,
+                    backgroundSize: '50px 50px'
+                  }} />
+                </div>
               </div>
-              <p className="text-slate-500 text-sm font-medium mb-2">No preview available</p>
-              <p className="text-slate-600 text-xs max-w-xs">
-                Generate or upload a resume to see the PDF preview here
-              </p>
-            </div>
+            ) : (
+              <div className="text-center z-10 flex flex-col items-center">
+                <div className="w-24 h-24 mb-6 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                  <FileText className="w-10 h-10 text-slate-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">No Preview Yet</h3>
+                <p className="text-slate-500 text-sm max-w-[250px] mx-auto">
+                  Start filling in your details on the left to see your resume preview here
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
