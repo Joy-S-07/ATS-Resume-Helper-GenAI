@@ -133,6 +133,18 @@
 /* Register the animation as a Tailwind v4 utility */
 @theme inline {
   --animate-dot-breathe: dot-breathe 6s ease-in-out infinite;
+  --animate-spotlight: spotlight 2s ease .75s 1 forwards;
+}
+
+@keyframes spotlight {
+  0% {
+    opacity: 0;
+    transform: translate(-72%, -62%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%,-40%) scale(1);
+  }
 }
 
 /* ─── Glass Card Styling (Adjusted for Dark Mode) ─── */
