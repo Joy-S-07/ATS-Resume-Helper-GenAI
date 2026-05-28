@@ -45,4 +45,11 @@ authRouter.post("/forgot-password", authController.forgotPasswordController)
  */
 authRouter.post("/reset-password", authController.resetPasswordController)
 
+/**
+ * @route POST /api/auth/google
+ * @description Authenticate with Google. Logs in existing users, returns 404 for new users.
+ * @access Public
+ */
+authRouter.post("/google", authController.googleAuthController)
+
 module.exports = authRouter

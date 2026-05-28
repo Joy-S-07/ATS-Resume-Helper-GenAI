@@ -9,11 +9,18 @@ export interface AuthUser {
   email: string;
 }
 
+export interface GoogleProfile {
+  email: string;
+  name: string;
+  googleId: string;
+}
+
 interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (username: string, email: string, password: string) => Promise<void>;
+  googleAuth: (credential: string) => Promise<GoogleProfile | null>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<string>;
   resetPassword: (token: string, password: string) => Promise<void>;
@@ -90,6 +97,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  /**
+   * Google auth: sends the ID token to the backend.
+   * - If user exists → logs them in, returns null
+   * - If user doesn't exist → returns the Google profile for signup pre-fill
+   */
+  const googleAuth = useCallback(async (credential: string): Promise<GoogleProfile | null> => {
+    try {
+      const data = await apiClient<{
+        message: string;
+        user: AuthUser;
+      }>("/api/auth/google", {
+        method: "POST",
+        body: { credential },
+      });
+
+      // User exists — logged in
+      setUser(data.user);
+      return null;
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        // User doesn't exist — parse the google profile from the error response
+        // We need to re-fetch to get the body. Let's do a raw fetch instead.
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+        const res = await fetch(`${API_BASE}/api/auth/google`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ credential }),
+        });
+        const body = await res.json();
+        return body.googleProfile as GoogleProfile;
+      }
+      throw err;
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await apiClient("/api/auth/logout");
@@ -127,6 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         login,
         signup,
+        googleAuth,
         logout,
         forgotPassword,
         resetPassword,

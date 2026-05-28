@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const nodemailer = require("nodemailer")
 const tokenBlackListModel = require('../models/blacklist.model')
+const { OAuth2Client } = require('google-auth-library')
 
 
 /**
@@ -276,11 +277,80 @@ async function resetPasswordController(req, res) {
 }
 
 
+/**
+ * @name googleAuthController
+ * @description Verify Google ID token and log in if user exists, or return profile for signup
+ * @access Public
+ */
+async function googleAuthController(req, res) {
+    const { credential } = req.body;
+
+    if (!credential) {
+        return res.status(400).json({ message: "Google credential is required" });
+    }
+
+    try {
+        const clientId = (process.env.GOOGLE_CLIENT_ID || "").trim();
+        console.log("Verifying Google token with client ID:", clientId.substring(0, 20) + "...");
+        
+        const client = new OAuth2Client(clientId);
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: clientId,
+        });
+
+        const payload = ticket.getPayload();
+        const { email, name, sub: googleId } = payload;
+
+        // Check if user exists
+        const user = await userModel.findOne({ email });
+
+        if (user) {
+            // User exists — log them in
+            const token = jwt.sign(
+                { id: user._id, username: user.username, email: user.email },
+                process.env.JWT_SECRET,
+                { expiresIn: "1d" }
+            );
+
+            res.cookie("token", token, {
+                httpOnly: true,
+                sameSite: "lax",
+                maxAge: 24 * 60 * 60 * 1000,
+            });
+
+            return res.status(200).json({
+                message: "User logged in successfully.",
+                user: {
+                    id: user._id,
+                    username: user.username,
+                    email: user.email,
+                },
+            });
+        }
+
+        // User does NOT exist — return profile info for signup
+        return res.status(404).json({
+            message: "User not found. Please sign up.",
+            googleProfile: {
+                email,
+                name,
+                googleId,
+            },
+        });
+    } catch (error) {
+        console.error("Google auth error:", error.message || error);
+        return res.status(401).json({ message: "Invalid Google credential: " + (error.message || "Unknown error") });
+    }
+}
+
+
 module.exports = {
     registerUserController,
     loginUserController,
     logoutUserController,
     getMeController,
     forgotPasswordController,
-    resetPasswordController
+    resetPasswordController,
+    googleAuthController
 }

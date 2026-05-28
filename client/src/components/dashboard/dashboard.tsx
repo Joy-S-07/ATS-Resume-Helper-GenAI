@@ -15,45 +15,59 @@ import MyInfoTab from "./my-info-tab";
 import ResumesTab from "./resumes-tab";
 import JobTrackerTab from "./job-tracker-tab";
 import ROUTES from "@/routes";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Dashboard() {
   const router = useRouter();
+  const { user } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   
-  // Profile State
+  // Profile State — populated from the logged-in user, rest is empty until filled
   const [profile, setProfile] = useState({
-    firstName: "Alex",
-    lastName: "Carter",
-    email: "alex@example.com",
-    role: "Senior Frontend Developer",
-    location: "San Francisco, CA",
-    experienceLevel: "senior",
-    bio: "Passionate frontend developer with 5+ years of experience building highly interactive web applications using React, Next.js, and Three.js."
+    firstName: "",
+    lastName: "",
+    email: "",
+    role: "",
+    location: "",
+    experienceLevel: "",
+    bio: ""
   });
   
   // Form State
   const [formData, setFormData] = useState({ ...profile });
 
-  const [skills, setSkills] = useState(["React", "Next.js", "TypeScript", "Tailwind CSS", "Three.js", "Framer Motion", "Node.js"]);
+  const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   
-  const [experiences, setExperiences] = useState([
-    { id: 1, title: "Senior Frontend Developer", company: "TechCorp Inc.", duration: "2021 - Present" },
-    { id: 2, title: "Frontend Developer", company: "StartupXYZ", duration: "2019 - 2021" },
-  ]);
+  const [experiences, setExperiences] = useState<{ id: number; title: string; company: string; duration: string }[]>([]);
   
-  const [education, setEducation] = useState([
-    { id: 1, degree: "B.S. Computer Science", institution: "Stanford University", year: "2019" },
-  ]);
+  const [education, setEducation] = useState<{ id: number; degree: string; institution: string; year: string }[]>([]);
 
-  const [links, setLinks] = useState([
-    { id: 1, name: "GitHub", url: "https://github.com/alexcarter", iconType: "github" },
-    { id: 2, name: "LinkedIn", url: "https://linkedin.com/in/alexcarter", iconType: "linkedin" },
-    { id: 3, name: "Portfolio", url: "https://alexcarter.dev", iconType: "portfolio" },
-  ]);
+  const [links, setLinks] = useState<{ id: number; name: string; url: string; iconType: string }[]>([]);
+
+  // Populate profile from auth user when available
+  useEffect(() => {
+    if (user) {
+      const nameParts = user.username.split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+      setProfile(prev => ({
+        ...prev,
+        firstName,
+        lastName,
+        email: user.email,
+      }));
+      setFormData(prev => ({
+        ...prev,
+        firstName,
+        lastName,
+        email: user.email,
+      }));
+    }
+  }, [user]);
 
   const SKILL_SUGGESTIONS = [
     "ActiveMQ", "Adobe XD", "Airflow", "Alpine.js", "Anchor", "Android",

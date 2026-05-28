@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Plus, Briefcase } from "lucide-react";
 
 export default function JobTrackerTab() {
   return (
@@ -38,56 +38,16 @@ export default function JobTrackerTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              <tr className="hover:bg-white/[0.02] transition-colors">
-                <td className="px-6 py-4 font-medium text-white">Google</td>
-                <td className="px-6 py-4">Senior UI Engineer</td>
-                <td className="px-6 py-4 text-slate-400">May 20, 2026</td>
-                <td className="px-6 py-4">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Interviewing
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button className="text-slate-400 hover:text-white transition-colors">View</button>
-                </td>
-              </tr>
-              <tr className="hover:bg-white/[0.02] transition-colors">
-                <td className="px-6 py-4 font-medium text-white">Vercel</td>
-                <td className="px-6 py-4">Frontend Developer</td>
-                <td className="px-6 py-4 text-slate-400">May 18, 2026</td>
-                <td className="px-6 py-4">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span> Assessment
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button className="text-slate-400 hover:text-white transition-colors">View</button>
-                </td>
-              </tr>
-              <tr className="hover:bg-white/[0.02] transition-colors">
-                <td className="px-6 py-4 font-medium text-white">Stripe</td>
-                <td className="px-6 py-4">React Engineer</td>
-                <td className="px-6 py-4 text-slate-400">May 15, 2026</td>
-                <td className="px-6 py-4">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Offer
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button className="text-slate-400 hover:text-white transition-colors">View</button>
-                </td>
-              </tr>
-              <tr className="hover:bg-white/[0.02] transition-colors">
-                <td className="px-6 py-4 font-medium text-white">OpenAI</td>
-                <td className="px-6 py-4">UI/UX Developer</td>
-                <td className="px-6 py-4 text-slate-400">May 10, 2026</td>
-                <td className="px-6 py-4">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Applied
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button className="text-slate-400 hover:text-white transition-colors">View</button>
+              <tr>
+                <td colSpan={5} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      <Briefcase className="w-6 h-6 text-primary" />
+                    </div>
+                    <p className="text-sm text-slate-400 max-w-xs">
+                      No applications yet. Click &quot;Add Application&quot; to start tracking your job search.
+                    </p>
+                  </div>
                 </td>
               </tr>
             </tbody>
