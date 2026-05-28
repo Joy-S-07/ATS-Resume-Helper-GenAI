@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
+import { AuthProvider } from "@/context/auth-context";
+import { ToastProvider } from "@/context/toast-context";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,9 +33,14 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <Navbar />
-        <main className="flex-1">{children}</main>
+        <AuthProvider>
+          <ToastProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   );
 }
+

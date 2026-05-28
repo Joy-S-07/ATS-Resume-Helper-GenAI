@@ -3,11 +3,15 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { Mail, Lock, ArrowRight, Loader2, ArrowLeft } from "lucide-react";
 import ROUTES from "@/routes";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/context/toast-context";
+import { ApiError } from "@/lib/api";
 
 type Uniforms = {
   [key: string]: {
@@ -359,13 +363,27 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const [initialCanvasVisible, setInitialCanvasVisible] = useState(true);
+  const { login } = useAuth();
+  const toast = useToast();
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
-    // TODO: Implement JWT login logic
-    setTimeout(() => setIsLoading(false), 1500);
+    try {
+      await login(email, password);
+      toast.success("Signed in successfully!");
+      router.push(ROUTES.DASHBOARD);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Something went wrong";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -411,6 +429,16 @@ export function LoginPage() {
             </div>
 
             <form onSubmit={handleLogin} className="space-y-4">
+              {/* Error Message */}
+              {error && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+                  </svg>
+                  {error}
+                </div>
+              )}
+
               {/* Email Input */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-300 ml-1">Email</label>

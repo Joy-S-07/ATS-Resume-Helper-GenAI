@@ -9,6 +9,7 @@ export const ROUTES = {
   LOGIN: "/login",
   SIGNUP: "/signup",
   FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
 
   // Protected / App Routes
   DASHBOARD: "/dashboard",
@@ -25,7 +26,7 @@ export const ROUTES = {
 export type AppRoute = (typeof ROUTES)[keyof typeof ROUTES];
 
 // Route groups for middleware or layout checking
-export const AUTH_ROUTES: AppRoute[] = [ROUTES.LOGIN, ROUTES.SIGNUP, ROUTES.FORGOT_PASSWORD];
+export const AUTH_ROUTES: AppRoute[] = [ROUTES.LOGIN, ROUTES.SIGNUP, ROUTES.FORGOT_PASSWORD, ROUTES.RESET_PASSWORD];
 export const PUBLIC_ROUTES: AppRoute[] = [ROUTES.HOME, ...AUTH_ROUTES];
 export const PROTECTED_ROUTES: AppRoute[] = [
   ROUTES.DASHBOARD,

@@ -1,32 +1,64 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { CanvasRevealEffect } from "@/components/auth/login-page";
-import { Mail, ArrowRight, Loader2, ArrowLeft, CheckCircle } from "lucide-react";
+import { Lock, ArrowRight, Loader2, ArrowLeft, CheckCircle } from "lucide-react";
 import ROUTES from "@/routes";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/context/toast-context";
 import { ApiError } from "@/lib/api";
 
-export function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [initialCanvasVisible] = useState(true);
-  const { forgotPassword } = useAuth();
+function ResetPasswordForm() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token") || "";
+  const router = useRouter();
+  const { resetPassword } = useAuth();
   const toast = useToast();
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [initialCanvasVisible] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    if (!token) {
+      const msg = "Invalid or missing reset token";
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      const msg = "Passwords do not match";
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+
+    if (password.length < 6) {
+      const msg = "Password must be at least 6 characters";
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await forgotPassword(email);
-      setIsSubmitted(true);
-      toast.success("Reset link sent! Check your inbox.");
+      await resetPassword(token, password);
+      setIsSuccess(true);
+      toast.success("Password reset successfully!");
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Something went wrong";
+      const message =
+        err instanceof ApiError ? err.message : "Something went wrong";
+      setError(message);
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -35,7 +67,6 @@ export function ForgotPasswordPage() {
 
   return (
     <div className="relative min-h-screen w-full bg-[#050505] flex items-center justify-center p-4 overflow-hidden text-slate-200">
-
       {/* Back Button */}
       <Link
         href={ROUTES.LOGIN}
@@ -68,10 +99,9 @@ export function ForgotPasswordPage() {
       {/* Form Container */}
       <div className="relative z-10 w-full max-w-md">
         <div className="glass-card w-full">
-
           <div className="p-8 relative z-10">
             <AnimatePresence mode="wait">
-              {!isSubmitted ? (
+              {!isSuccess ? (
                 <motion.div
                   key="form"
                   initial={{ opacity: 0, y: 10 }}
@@ -80,27 +110,71 @@ export function ForgotPasswordPage() {
                   transition={{ duration: 0.3 }}
                 >
                   <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Reset Password</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
+                      Set New Password
+                    </h1>
                     <p className="text-sm text-slate-400">
-                      Enter your email address and we&apos;ll send you a link to reset your password.
+                      Enter your new password below.
                     </p>
                   </div>
 
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Email Input */}
+                    {/* Error Message */}
+                    {error && (
+                      <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
+                        <svg
+                          className="w-4 h-4 shrink-0"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="15" y1="9" x2="9" y2="15" />
+                          <line x1="9" y1="9" x2="15" y2="15" />
+                        </svg>
+                        {error}
+                      </div>
+                    )}
+
+                    {/* New Password */}
                     <div className="space-y-1">
-                      <label className="text-xs font-medium text-slate-300 ml-1">Email</label>
+                      <label className="text-xs font-medium text-slate-300 ml-1">
+                        New Password
+                      </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                          <Mail className="h-4 w-4 text-slate-400" />
+                          <Lock className="h-4 w-4 text-slate-400" />
                         </div>
                         <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
                           required
                           className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all backdrop-blur-sm"
-                          placeholder="name@example.com"
+                          placeholder="••••••••"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Confirm Password */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-300 ml-1">
+                        Confirm Password
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                          <Lock className="h-4 w-4 text-slate-400" />
+                        </div>
+                        <input
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/30 focus:bg-white/10 transition-all backdrop-blur-sm"
+                          placeholder="••••••••"
                         />
                       </div>
                     </div>
@@ -116,7 +190,7 @@ export function ForgotPasswordPage() {
                         <Loader2 className="animate-spin mr-2 h-5 w-5 text-black" />
                       ) : (
                         <>
-                          Send Reset Link
+                          Reset Password
                           <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                         </>
                       )}
@@ -137,21 +211,20 @@ export function ForgotPasswordPage() {
                       <CheckCircle className="w-16 h-16 text-emerald-400 relative z-10" />
                     </div>
                   </div>
-                  <h2 className="text-2xl font-bold text-white mb-3">Check Your Email</h2>
+                  <h2 className="text-2xl font-bold text-white mb-3">
+                    Password Reset!
+                  </h2>
                   <p className="text-sm text-slate-400 mb-6">
-                    We&apos;ve sent a password reset link to{" "}
-                    <span className="text-white font-medium">{email}</span>.
-                    Please check your inbox and follow the instructions.
+                    Your password has been successfully reset. You can now sign
+                    in with your new password.
                   </p>
                   <motion.button
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => {
-                      setIsSubmitted(false);
-                      setEmail("");
-                    }}
-                    className="text-sm text-white/50 hover:text-white transition-colors underline underline-offset-4 decoration-white/20 hover:decoration-white/60"
+                    onClick={() => router.push(ROUTES.LOGIN)}
+                    className="w-full py-2.5 px-4 bg-white/90 text-black font-medium rounded-xl hover:bg-white hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] focus:outline-none focus:ring-2 focus:ring-white/50 transition-all flex items-center justify-center group"
                   >
-                    Didn&apos;t receive the email? Try again
+                    Go to Sign In
+                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </motion.button>
                 </motion.div>
               )}
@@ -162,7 +235,10 @@ export function ForgotPasswordPage() {
           <div className="bg-white/5 border-t border-white/10 p-4 text-center relative z-10">
             <p className="text-xs text-slate-400">
               Remember your password?{" "}
-              <Link href={ROUTES.LOGIN} className="relative group text-white/50 hover:text-white font-medium transition-colors inline-block ml-1">
+              <Link
+                href={ROUTES.LOGIN}
+                className="relative group text-white/50 hover:text-white font-medium transition-colors inline-block ml-1"
+              >
                 <span>Sign in</span>
                 <span className="absolute -bottom-0.5 left-0 w-full h-[1px] bg-white/70 scale-x-0 origin-left transition-transform duration-300 ease-out group-hover:scale-x-100"></span>
               </Link>
@@ -171,5 +247,19 @@ export function ForgotPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen w-full bg-[#050505] flex items-center justify-center">
+          <Loader2 className="animate-spin h-8 w-8 text-white/50" />
+        </div>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
