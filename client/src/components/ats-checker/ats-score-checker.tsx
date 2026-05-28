@@ -16,11 +16,31 @@ import {
   TrendingUp,
   Target,
   FileSearch,
-  Loader2
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { GLSLHills } from "@/components/ui/glsl-hills";
+
+// ─── Types matching the backend model ────────────────────────────────────────
+interface ATSResult {
+  _id: string;
+  fileName: string;
+  jobRole: string;
+  score: number;
+  verdict: string;
+  summary: string;
+  metrics: { count: number; examples: string[] };
+  actionVerbs: { strong: string[]; weak: string[] };
+  keywords: {
+    matched: { keyword: string; found: boolean }[];
+    missing: { keyword: string; found: boolean }[];
+  };
+  formattingIssues: { type: "error" | "warning" | "pass"; message: string }[];
+  sections: { name: string; present: boolean }[];
+  recommendations: string[];
+}
 
 const ATSScoreChecker = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -29,10 +49,16 @@ const ATSScoreChecker = () => {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [jobRole, setJobRole] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [result, setResult] = useState<ATSResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  // Bug 1 fix: direct ref to the hidden file input so the Browse button can trigger it
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Ref to track current status inside async closures (avoids stale state)
+  const statusRef = useRef(status);
+  useEffect(() => { statusRef.current = status; }, [status]);
 
-  // Initial Entrance Animation
   useEffect(() => {
     gsap.fromTo(
       ".ats-stagger",
@@ -41,45 +67,15 @@ const ATSScoreChecker = () => {
     );
   }, []);
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processFile(e.dataTransfer.files[0]);
-    }
+    if (e.dataTransfer.files?.[0]) processFile(e.dataTransfer.files[0]);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      processFile(e.target.files[0]);
-    }
-  };
-
-  const processFile = (selectedFile: File) => {
-    setFile(selectedFile);
-    setStatus("uploading");
-    setUploadProgress(0);
-
-    // Mock Upload Progress
-    let progress = 0;
-    const uploadInterval = setInterval(() => {
-      progress += 5;
-      setUploadProgress(progress);
-      if (progress >= 100) {
-        clearInterval(uploadInterval);
-        setTimeout(() => {
-          setStatus("analyzing");
-          // Mock Analysis Generation
-          setTimeout(() => {
-            setStatus("complete");
-            animateScore(86); // Mock final score
-          }, 4000);
-        }, 800);
-      }
-    }, 100);
+    if (e.target.files?.[0]) processFile(e.target.files[0]);
   };
 
   const animateScore = (targetScore: number) => {
@@ -88,10 +84,90 @@ const ATSScoreChecker = () => {
       value: targetScore,
       duration: 2,
       ease: "power4.out",
-      onUpdate: () => {
-        setScore(Math.round(obj.value));
-      },
+      onUpdate: () => setScore(Math.round(obj.value)),
     });
+  };
+
+  const processFile = async (selectedFile: File) => {
+    setFile(selectedFile);
+    setError(null);
+    setStatus("uploading");
+    setUploadProgress(0);
+
+    // Animate upload bar to 90% while the real request is in-flight
+    let progress = 0;
+    const uploadInterval = setInterval(() => {
+      progress = Math.min(progress + 4, 90);
+      setUploadProgress(progress);
+      if (progress >= 90) clearInterval(uploadInterval);
+    }, 80);
+
+    // Bug 2 fix: track whether fetch resolved before the transition timer fires
+    let fetchDone = false;
+    let pendingResult: ATSResult | null = null;
+    let pendingError: string | null = null;
+
+    // After 1.8 s of fake upload, switch to the analyzing skeleton —
+    // but only if the real fetch hasn't already finished
+    const transitionTimer = setTimeout(() => {
+      clearInterval(uploadInterval);
+      setUploadProgress(100);
+      setTimeout(() => {
+        if (!fetchDone) {
+          // fetch still running — show skeleton
+          setStatus("analyzing");
+        } else if (pendingError) {
+          setError(pendingError);
+          setStatus("idle");
+        } else if (pendingResult) {
+          setResult(pendingResult);
+          setStatus("complete");
+          animateScore(pendingResult.score);
+        }
+      }, 400);
+    }, 1800);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("jobRole", jobRole);
+
+      const response = await fetch("/api/ats", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      const data = await response.json();
+      fetchDone = true;
+
+      if (!response.ok) {
+        pendingError = data.error || "Analysis failed. Please try again.";
+        // If the skeleton is already showing, go straight to idle+error
+        if (statusRef.current === "analyzing") {
+          setError(pendingError);
+          setStatus("idle");
+        }
+        // Otherwise the transitionTimer callback will handle it
+        return;
+      }
+
+      pendingResult = data.result;
+      // If the skeleton is already showing, go straight to complete
+      if (statusRef.current === "analyzing") {
+        setResult(data.result);
+        setStatus("complete");
+        animateScore(data.result.score);
+      }
+      // Otherwise the transitionTimer callback will handle it
+    } catch {
+      fetchDone = true;
+      pendingError = "Network error. Make sure the server is running on port 3000.";
+      clearTimeout(transitionTimer);
+      clearInterval(uploadInterval);
+      setError(pendingError);
+      setStatus("idle");
+    }
   };
 
   const getScoreColor = (s: number) => {
@@ -106,9 +182,18 @@ const ATSScoreChecker = () => {
     return "bg-red-500/10";
   };
 
-  const toggleSection = (section: string) => {
+  const toggleSection = (section: string) =>
     setExpandedSection(expandedSection === section ? null : section);
+
+  const handleReset = () => {
+    setStatus("idle");
+    setScore(0);
+    setResult(null);
+    setFile(null);
+    setError(null);
+    setJobRole("");
   };
+
 
   return (
     <div ref={containerRef} className="w-full h-full relative overflow-hidden min-h-[calc(100vh-64px)] rounded-3xl">
@@ -119,12 +204,11 @@ const ATSScoreChecker = () => {
       >
         <GLSLHills className="w-full h-full" width="100%" height="100%" />
       </motion.div>
-      <div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col justify-center h-full py-12 px-4 md:px-8">
 
+      <div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col justify-center h-full py-12 px-4 md:px-8">
         <AnimatePresence mode="wait">
-          {/* ======================= */}
-          {/* 1. IDLE STATE           */}
-          {/* ======================= */}
+
+          {/* ── 1. IDLE ─────────────────────────────────────────────────── */}
           {status === "idle" && (
             <motion.div
               key="idle"
@@ -133,8 +217,18 @@ const ATSScoreChecker = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="ats-stagger flex flex-col justify-center gap-8 bg-black/40 backdrop-blur-xl border border-white/10 p-8 md:p-12 rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
             >
+              {/* Error banner */}
+              {error && (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {error}
+                </div>
+              )}
+
               <div className="w-full">
-                <label className="text-sm font-semibold tracking-wider uppercase text-slate-400 mb-2 block ml-1">Target Job Role</label>
+                <label className="text-sm font-semibold tracking-wider uppercase text-slate-400 mb-2 block ml-1">
+                  Target Job Role
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
                     <Briefcase className="h-5 w-5 text-slate-400" />
@@ -154,10 +248,15 @@ const ATSScoreChecker = () => {
                 onDrop={handleDrop}
                 className={cn(
                   "relative flex flex-col items-center justify-center w-full h-96 rounded-3xl border-2 border-dashed transition-all overflow-hidden bg-[#111]/50 backdrop-blur-sm",
-                  jobRole.trim().length > 0 ? "border-slate-600 hover:border-emerald-400/50 hover:bg-emerald-400/5 cursor-pointer" : "border-slate-700/50 cursor-not-allowed opacity-50"
+                  jobRole.trim().length > 0
+                    ? "border-slate-600 hover:border-emerald-400/50 hover:bg-emerald-400/5 cursor-pointer"
+                    : "border-slate-700/50 cursor-not-allowed opacity-50"
                 )}
+                onClick={() => jobRole.trim().length > 0 && fileInputRef.current?.click()}
               >
+                {/* Hidden real file input — triggered by ref */}
                 <input
+                  ref={fileInputRef}
                   type="file"
                   accept=".pdf,.doc,.docx"
                   className="hidden"
@@ -165,8 +264,7 @@ const ATSScoreChecker = () => {
                   onChange={handleFileChange}
                   disabled={jobRole.trim().length === 0}
                 />
-
-                <label htmlFor="resume-upload" className="flex flex-col items-center justify-center w-full h-full cursor-pointer p-8 text-center">
+                <div className="flex flex-col items-center justify-center w-full h-full p-8 text-center pointer-events-none">
                   <div className="flex gap-4 mb-8">
                     <div className="relative flex items-center justify-center bg-red-500/10 text-red-400 p-4 rounded-2xl transform -rotate-6 shadow-lg border border-red-500/20">
                       <FileText className="w-10 h-10" />
@@ -179,17 +277,22 @@ const ATSScoreChecker = () => {
                   </div>
                   <p className="text-2xl font-bold text-white mb-2">Drag & Drop Resume</p>
                   <p className="text-base text-slate-400 mb-8">Supports PDF, DOCX (Max 5MB)</p>
-                  <Button disabled={jobRole.trim().length === 0} variant="outline" className="border-white/20 text-white hover:bg-white/10 rounded-full px-8 py-6 text-base transition-colors">
+                  {/* Bug 1 fix: pointer-events-auto so the button itself is clickable,
+                      but it calls fileInputRef.current.click() directly */}
+                  <button
+                    type="button"
+                    disabled={jobRole.trim().length === 0}
+                    onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                    className="pointer-events-auto border border-white/20 text-white hover:bg-white/10 rounded-full px-8 py-3 text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     Browse Files
-                  </Button>
-                </label>
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
 
-          {/* ======================= */}
-          {/* 2. UPLOADING STATE      */}
-          {/* ======================= */}
+          {/* ── 2. UPLOADING ────────────────────────────────────────────── */}
           {status === "uploading" && (
             <motion.div
               key="uploading"
@@ -199,16 +302,12 @@ const ATSScoreChecker = () => {
               className="flex items-center justify-center h-96"
             >
               <div className="relative w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-2xl p-8 overflow-hidden shadow-2xl">
-                {/* Glowing Green Top Effect */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-64 bg-emerald-500/20 blur-[80px] pointer-events-none" />
                 <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-400 to-transparent opacity-50" />
-
                 <div className="relative z-10 flex flex-col gap-6">
                   <h3 className="text-xl font-bold text-white tracking-tight">
-                    Uploaded "{file?.name || 'Resume'}"
+                    Uploading &ldquo;{file?.name}&rdquo;
                   </h3>
-
-                  {/* Progress Bar */}
                   <div className="relative w-full h-4 bg-white/10 rounded-full overflow-hidden shadow-inner">
                     <motion.div
                       className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full shadow-[0_0_15px_rgba(52,211,153,0.5)]"
@@ -217,7 +316,6 @@ const ATSScoreChecker = () => {
                       transition={{ ease: "linear" }}
                     />
                   </div>
-
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-white">{uploadProgress}% Uploaded</span>
                     <div className="flex items-center gap-2 text-slate-400">
@@ -225,18 +323,12 @@ const ATSScoreChecker = () => {
                       <span className="text-sm">Uploading Resume</span>
                     </div>
                   </div>
-
-                  <Button disabled className="mt-4 w-full bg-white/5 border border-white/10 text-slate-400 rounded-lg py-6 font-medium">
-                    Open
-                  </Button>
                 </div>
               </div>
             </motion.div>
           )}
 
-          {/* ======================= */}
-          {/* 3. ANALYZING STATE      */}
-          {/* ======================= */}
+          {/* ── 3. ANALYZING ────────────────────────────────────────────── */}
           {status === "analyzing" && (
             <motion.div
               key="analyzing"
@@ -245,7 +337,6 @@ const ATSScoreChecker = () => {
               exit={{ opacity: 0 }}
               className="flex flex-col border border-white/10 rounded-2xl bg-[#111]/60 backdrop-blur-md overflow-hidden shadow-xl"
             >
-              {/* Skeleton Header */}
               <div className="flex items-center gap-8 p-8 border-b border-white/5 bg-white/[0.01]">
                 <div className="w-28 h-28 rounded-full bg-white/5 animate-pulse shrink-0" />
                 <div className="space-y-4 w-full max-w-lg">
@@ -254,8 +345,6 @@ const ATSScoreChecker = () => {
                   <div className="h-5 bg-white/5 rounded-md w-3/4 animate-pulse" />
                 </div>
               </div>
-
-              {/* Skeleton Details Grid */}
               <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="border border-white/5 rounded-xl bg-white/[0.02] p-6 flex flex-col gap-4">
@@ -271,113 +360,108 @@ const ATSScoreChecker = () => {
                   </div>
                 ))}
               </div>
+              <div className="flex items-center justify-center gap-3 pb-8 text-slate-400">
+                <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+                <span className="text-sm font-medium animate-pulse">AI is analysing your resume…</span>
+              </div>
             </motion.div>
           )}
 
-          {/* ======================= */}
-          {/* 4. COMPLETE STATE       */}
-          {/* ======================= */}
-          {status === "complete" && (
+          {/* ── 4. COMPLETE ─────────────────────────────────────────────── */}
+          {status === "complete" && result && (
             <motion.div
               key="complete"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col border border-white/10 rounded-2xl bg-[#111]/60 backdrop-blur-md overflow-hidden shadow-xl"
             >
-              {/* Top Score Section */}
+              {/* Score header */}
               <div className={cn("flex flex-col md:flex-row items-center gap-8 p-8 border-b border-white/5", getScoreBgColor(score))}>
                 <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="45" fill="none" className="stroke-slate-800" strokeWidth="6" />
                     <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
-                      fill="none"
+                      cx="50" cy="50" r="45" fill="none"
                       className={getScoreColor(score)}
-                      strokeWidth="6"
-                      strokeLinecap="round"
+                      strokeWidth="6" strokeLinecap="round"
                       strokeDasharray="283"
                       strokeDashoffset={283 - (283 * score) / 100}
                       style={{ transition: "stroke-dashoffset 2s cubic-bezier(0.16, 1, 0.3, 1)" }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center flex-col">
-                    <span className={cn("text-5xl font-black tabular-nums", getScoreColor(score).split(' ')[0])}>
+                    <span className={cn("text-5xl font-black tabular-nums", getScoreColor(score).split(" ")[0])}>
                       {score}
                     </span>
                   </div>
                 </div>
                 <div className="text-center md:text-left">
-                  <h3 className="text-4xl font-black text-white mb-3">Great Match!</h3>
-                  <p className="text-lg text-slate-300 max-w-2xl">
-                    Your resume successfully parsed against standard ATS systems. It meets readability guidelines and demonstrates strong core competency for the role of <span className="text-white font-semibold">{jobRole || "your target role"}</span>. See detailed findings below.
-                  </p>
+                  <h3 className="text-4xl font-black text-white mb-3">{result.verdict}</h3>
+                  <p className="text-lg text-slate-300 max-w-2xl">{result.summary}</p>
                   <div className="flex flex-wrap gap-3 mt-6 justify-center md:justify-start">
-                    <Button
-                      variant="outline"
-                      onClick={() => { setStatus("idle"); setScore(0); }}
-                      className="border-white/20 text-white hover:bg-white/10 rounded-full px-6 transition-colors"
-                    >
+                    <Button variant="outline" onClick={handleReset} className="border-white/20 text-white hover:bg-white/10 rounded-full px-6 transition-colors">
                       Scan Another Resume
-                    </Button>
-                    <Button className="bg-white hover:bg-gray-200 text-black font-bold shadow-[0_0_20px_rgba(255,255,255,0.15)] rounded-full px-8 transition-all">
-                      <ShieldCheck className="w-5 h-5 mr-2" /> Auto-Fix Issues
                     </Button>
                   </div>
                 </div>
               </div>
 
-              {/* Detailed Feedback Sections */}
+              {/* Detail cards */}
               <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#0a0a0a]/50">
 
-                {/* 1. Quantifiable Metrics */}
+                {/* Quantifiable Metrics */}
                 <div className="border border-white/5 rounded-xl bg-white/[0.02] overflow-hidden">
-                  <button onClick={() => toggleSection('metrics')} className="w-full flex items-center justify-between p-5 hover:bg-white/[0.04] transition-colors">
+                  <button onClick={() => toggleSection("metrics")} className="w-full flex items-center justify-between p-5 hover:bg-white/[0.04] transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
                         <TrendingUp className="w-5 h-5" />
                       </div>
-                      <span className="font-semibold text-lg text-slate-200">Quantifiable Metrics</span>
+                      <span className="font-semibold text-lg text-slate-200">
+                        Quantifiable Metrics ({result.metrics.count})
+                      </span>
                     </div>
-                    {expandedSection === 'metrics' ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                    {expandedSection === "metrics" ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
                   </button>
                   <AnimatePresence>
-                    {expandedSection === 'metrics' && (
+                    {expandedSection === "metrics" && (
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                         <div className="p-5 pt-0 border-t border-white/5 text-base text-slate-400 space-y-3">
-                          <p>We found <strong className="text-white">4 metrics</strong> backing up your achievements. AI scanners look for numbers to validate scale and impact.</p>
-                          <ul className="list-disc pl-5 space-y-1">
-                            <li>"increased conversion by 25%" <CheckCircle className="inline w-3 h-3 text-emerald-400 ml-1" /></li>
-                            <li>"managed team of 12" <CheckCircle className="inline w-3 h-3 text-emerald-400 ml-1" /></li>
-                          </ul>
+                          <p>Found <strong className="text-white">{result.metrics.count} metric{result.metrics.count !== 1 ? "s" : ""}</strong> backing up your achievements.</p>
+                          {result.metrics.examples.length > 0 && (
+                            <ul className="list-disc pl-5 space-y-1">
+                              {result.metrics.examples.map((ex, i) => (
+                                <li key={i}>&ldquo;{ex}&rdquo; <CheckCircle className="inline w-3 h-3 text-emerald-400 ml-1" /></li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
 
-                {/* 2. Action Verbs */}
+                {/* Action Verbs */}
                 <div className="border border-white/5 rounded-xl bg-white/[0.02] overflow-hidden">
-                  <button onClick={() => toggleSection('verbs')} className="w-full flex items-center justify-between p-5 hover:bg-white/[0.04] transition-colors">
+                  <button onClick={() => toggleSection("verbs")} className="w-full flex items-center justify-between p-5 hover:bg-white/[0.04] transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
                         <Target className="w-5 h-5" />
                       </div>
                       <span className="font-semibold text-lg text-slate-200">Action & Impact Verbs</span>
                     </div>
-                    {expandedSection === 'verbs' ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                    {expandedSection === "verbs" ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
                   </button>
                   <AnimatePresence>
-                    {expandedSection === 'verbs' && (
+                    {expandedSection === "verbs" && (
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                         <div className="p-5 pt-0 border-t border-white/5 text-base text-slate-400 space-y-3">
-                          <p>Strong usage of high-impact verbs. Avoid weak phrases like "responsible for" or "helped with".</p>
                           <div className="flex flex-wrap gap-2 mt-2">
-                            <span className="px-3 py-1 bg-white/5 rounded border border-white/10 text-white">Architected</span>
-                            <span className="px-3 py-1 bg-white/5 rounded border border-white/10 text-white">Spearheaded</span>
-                            <span className="px-3 py-1 bg-white/5 rounded border border-white/10 text-white">Delivered</span>
-                            <span className="px-3 py-1 bg-red-500/10 rounded border border-red-500/20 text-red-400 line-through">Worked on</span>
+                            {result.actionVerbs.strong.map((v, i) => (
+                              <span key={i} className="px-3 py-1 bg-white/5 rounded border border-white/10 text-white">{v}</span>
+                            ))}
+                            {result.actionVerbs.weak.map((v, i) => (
+                              <span key={i} className="px-3 py-1 bg-red-500/10 rounded border border-red-500/20 text-red-400 line-through">{v}</span>
+                            ))}
                           </div>
                         </div>
                       </motion.div>
@@ -385,28 +469,30 @@ const ATSScoreChecker = () => {
                   </AnimatePresence>
                 </div>
 
-                {/* 3. Keywords */}
+                {/* Keywords */}
                 <div className="border border-white/5 rounded-xl bg-white/[0.02] overflow-hidden">
-                  <button onClick={() => toggleSection('keywords')} className="w-full flex items-center justify-between p-5 hover:bg-white/[0.04] transition-colors">
+                  <button onClick={() => toggleSection("keywords")} className="w-full flex items-center justify-between p-5 hover:bg-white/[0.04] transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
                         <FileSearch className="w-5 h-5" />
                       </div>
-                      <span className="font-semibold text-lg text-slate-200">Keyword Match (18/20)</span>
+                      <span className="font-semibold text-lg text-slate-200">
+                        Keyword Match ({result.keywords.matched.length}/{result.keywords.matched.length + result.keywords.missing.length})
+                      </span>
                     </div>
-                    {expandedSection === 'keywords' ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                    {expandedSection === "keywords" ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
                   </button>
                   <AnimatePresence>
-                    {expandedSection === 'keywords' && (
+                    {expandedSection === "keywords" && (
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                         <div className="p-5 pt-0 border-t border-white/5 text-base text-slate-400">
-                          <p className="mb-3">Keywords extracted based on your role target.</p>
                           <div className="flex flex-wrap gap-2">
-                            <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded">React</span>
-                            <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded">TypeScript</span>
-                            <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded">Node.js</span>
-                            <span className="px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-400 rounded line-through">GraphQL</span>
-                            <span className="px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-400 rounded line-through">Docker</span>
+                            {result.keywords.matched.map((k, i) => (
+                              <span key={i} className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded">{k.keyword}</span>
+                            ))}
+                            {result.keywords.missing.map((k, i) => (
+                              <span key={i} className="px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-400 rounded line-through">{k.keyword}</span>
+                            ))}
                           </div>
                         </div>
                       </motion.div>
@@ -414,30 +500,32 @@ const ATSScoreChecker = () => {
                   </AnimatePresence>
                 </div>
 
-                {/* 4. Formatting */}
+                {/* Formatting */}
                 <div className="border border-white/5 rounded-xl bg-white/[0.02] overflow-hidden">
-                  <button onClick={() => toggleSection('formatting')} className="w-full flex items-center justify-between p-5 hover:bg-white/[0.04] transition-colors">
+                  <button onClick={() => toggleSection("formatting")} className="w-full flex items-center justify-between p-5 hover:bg-white/[0.04] transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
                         <AlertTriangle className="w-5 h-5" />
                       </div>
                       <span className="font-semibold text-lg text-slate-200">Formatting Issues</span>
                     </div>
-                    {expandedSection === 'formatting' ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                    {expandedSection === "formatting" ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
                   </button>
                   <AnimatePresence>
-                    {expandedSection === 'formatting' && (
+                    {expandedSection === "formatting" && (
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                         <div className="p-5 pt-0 border-t border-white/5 text-base text-slate-400">
                           <ul className="space-y-3">
-                            <li className="flex items-start gap-3">
-                              <XCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                              <span>Multi-column layout detected. ATS systems parse left-to-right, which may mix up your dates and roles.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                              <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                              <span>Standard, machine-readable fonts used.</span>
-                            </li>
+                            {result.formattingIssues.map((issue, i) => (
+                              <li key={i} className="flex items-start gap-3">
+                                {issue.type === "pass"
+                                  ? <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                                  : issue.type === "error"
+                                  ? <XCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                                  : <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />}
+                                <span>{issue.message}</span>
+                              </li>
+                            ))}
                           </ul>
                         </div>
                       </motion.div>
@@ -445,26 +533,30 @@ const ATSScoreChecker = () => {
                   </AnimatePresence>
                 </div>
 
-                {/* 5. Section Presence */}
+                {/* Sections */}
                 <div className="border border-white/5 rounded-xl bg-white/[0.02] overflow-hidden md:col-span-2">
-                  <button onClick={() => toggleSection('sections')} className="w-full flex items-center justify-between p-5 hover:bg-white/[0.04] transition-colors">
+                  <button onClick={() => toggleSection("sections")} className="w-full flex items-center justify-between p-5 hover:bg-white/[0.04] transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
                         <LayoutTemplate className="w-5 h-5" />
                       </div>
                       <span className="font-semibold text-lg text-slate-200">Core Section Presence</span>
                     </div>
-                    {expandedSection === 'sections' ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                    {expandedSection === "sections" ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
                   </button>
                   <AnimatePresence>
-                    {expandedSection === 'sections' && (
+                    {expandedSection === "sections" && (
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                         <div className="p-5 pt-0 border-t border-white/5 text-base text-slate-400">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-emerald-400" /> <span className="text-slate-300">Contact Info</span></div>
-                            <div className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-emerald-400" /> <span className="text-slate-300">Experience</span></div>
-                            <div className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-emerald-400" /> <span className="text-slate-300">Education</span></div>
-                            <div className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-emerald-400" /> <span className="text-slate-300">Skills</span></div>
+                            {result.sections.map((sec, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                {sec.present
+                                  ? <CheckCircle className="w-5 h-5 text-emerald-400" />
+                                  : <XCircle className="w-5 h-5 text-red-400" />}
+                                <span className={sec.present ? "text-slate-300" : "text-slate-500"}>{sec.name}</span>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </motion.div>
@@ -472,11 +564,41 @@ const ATSScoreChecker = () => {
                   </AnimatePresence>
                 </div>
 
+                {/* Recommendations */}
+                {result.recommendations.length > 0 && (
+                  <div className="border border-white/5 rounded-xl bg-white/[0.02] overflow-hidden md:col-span-2">
+                    <button onClick={() => toggleSection("recommendations")} className="w-full flex items-center justify-between p-5 hover:bg-white/[0.04] transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
+                          <ShieldCheck className="w-5 h-5" />
+                        </div>
+                        <span className="font-semibold text-lg text-slate-200">
+                          Recommendations ({result.recommendations.length})
+                        </span>
+                      </div>
+                      {expandedSection === "recommendations" ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                    </button>
+                    <AnimatePresence>
+                      {expandedSection === "recommendations" && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                          <div className="p-5 pt-0 border-t border-white/5 text-base text-slate-400">
+                            <ol className="space-y-3 list-decimal pl-5">
+                              {result.recommendations.map((rec, i) => (
+                                <li key={i}>{rec}</li>
+                              ))}
+                            </ol>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
 
+        </AnimatePresence>
       </div>
     </div>
   );

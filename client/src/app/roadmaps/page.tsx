@@ -1,50 +1,160 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ArrowRight, Briefcase, Loader2, Map } from 'lucide-react';
+import {
+  Sparkles,
+  ArrowRight,
+  Briefcase,
+  Loader2,
+  Map,
+  History,
+  Trash2,
+  ChevronLeft,
+  AlertCircle,
+} from 'lucide-react';
 import { GLSLHills } from '@/components/ui/glsl-hills';
 import Plan, { Task } from '@/components/ui/agent-plan';
 import { cn } from '@/lib/utils';
+
+interface SavedRoadmap {
+  _id: string;
+  role: string;
+  tasks: Task[];
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function RoadmapsPage() {
   const [role, setRole] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [tasks, setTasks] = useState<Task[] | null>(null);
+  const [currentRoadmapId, setCurrentRoadmapId] = useState<string | null>(null);
+  const [savedRoadmaps, setSavedRoadmaps] = useState<SavedRoadmap[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSavingProgress, setIsSavingProgress] = useState(false);
 
+  // ── Fetch saved roadmaps on mount ──────────────────────────────────────────
+  const fetchSavedRoadmaps = useCallback(async () => {
+    setIsLoadingHistory(true);
+    try {
+      const res = await fetch('/api/roadmap', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setSavedRoadmaps(data.roadmaps || []);
+      }
+    } catch {
+      // silently fail — user may not be logged in
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSavedRoadmaps();
+  }, [fetchSavedRoadmaps]);
+
+  // ── Generate new roadmap ───────────────────────────────────────────────────
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!role.trim()) return;
 
     setIsGenerating(true);
+    setError(null);
+
     try {
       const response = await fetch('/api/roadmap', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ role }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setTasks(data.tasks);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to generate roadmap. Please try again.');
+        return;
       }
-    } catch (error) {
-      console.error('Failed to generate roadmap', error);
+
+      setTasks(data.tasks);
+      setCurrentRoadmapId(data.roadmapId || null);
+      // Refresh history list
+      fetchSavedRoadmaps();
+    } catch {
+      setError('Network error. Make sure the server is running.');
     } finally {
       setIsGenerating(false);
     }
   };
 
+  // ── Save progress (task status updates) ───────────────────────────────────
+  const handleSaveProgress = async (updatedTasks: Task[]) => {
+    if (!currentRoadmapId) return;
+
+    setIsSavingProgress(true);
+    try {
+      await fetch(`/api/roadmap/${currentRoadmapId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ tasks: updatedTasks }),
+      });
+      fetchSavedRoadmaps();
+    } catch {
+      // non-critical — don't show error for background saves
+    } finally {
+      setIsSavingProgress(false);
+    }
+  };
+
+  // ── Load a saved roadmap ───────────────────────────────────────────────────
+  const handleLoadRoadmap = (roadmap: SavedRoadmap) => {
+    setRole(roadmap.role);
+    setTasks(roadmap.tasks);
+    setCurrentRoadmapId(roadmap._id);
+    setShowHistory(false);
+    setError(null);
+  };
+
+  // ── Delete a saved roadmap ─────────────────────────────────────────────────
+  const handleDeleteRoadmap = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/roadmap/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setSavedRoadmaps((prev) => prev.filter((r) => r._id !== id));
+        if (currentRoadmapId === id) {
+          setTasks(null);
+          setCurrentRoadmapId(null);
+        }
+      }
+    } catch {
+      // silently fail
+    }
+  };
+
+  // ── Reset to input form ────────────────────────────────────────────────────
+  const handleStartOver = () => {
+    setTasks(null);
+    setCurrentRoadmapId(null);
+    setRole('');
+    setError(null);
+  };
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background">
-      {/* Background Component */}
+      {/* Background */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <GLSLHills width="100%" height="100%" />
       </div>
 
-      {/* Decorative gradient blur */}
+      {/* Decorative gradient */}
       <div
         aria-hidden="true"
         className={cn(
@@ -55,7 +165,8 @@ export default function RoadmapsPage() {
       />
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 py-20 sm:px-6 lg:px-8 h-full min-h-screen flex flex-col">
-        {/* Header Section */}
+
+        {/* ── Header ─────────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -72,9 +183,76 @@ export default function RoadmapsPage() {
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Tell us the role you want to master, and our AI will generate a comprehensive step-by-step roadmap tailored for your success.
           </p>
+
+          {/* History toggle */}
+          {savedRoadmaps.length > 0 && !tasks && (
+            <button
+              onClick={() => setShowHistory((v) => !v)}
+              className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-secondary/50"
+            >
+              <History className="w-4 h-4" />
+              {showHistory ? 'Hide' : 'View'} saved roadmaps ({savedRoadmaps.length})
+            </button>
+          )}
         </motion.div>
 
-        {/* Input Section */}
+        {/* ── Saved Roadmaps History ──────────────────────────────────────── */}
+        <AnimatePresence>
+          {showHistory && !tasks && (
+            <motion.div
+              key="history"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="max-w-2xl mx-auto w-full mb-8 overflow-hidden"
+            >
+              <div className="bg-card/60 backdrop-blur-xl border border-border/50 rounded-2xl p-4 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2 mb-3">
+                  Your Saved Roadmaps
+                </p>
+                {isLoadingHistory ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  savedRoadmaps.map((roadmap) => (
+                    <motion.button
+                      key={roadmap._id}
+                      onClick={() => handleLoadRoadmap(roadmap)}
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-secondary/50 transition-colors text-left group"
+                      whileHover={{ x: 2 }}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Map className="w-4 h-4 text-primary shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{roadmap.role}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(roadmap.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                            {' · '}
+                            {roadmap.tasks.length} tasks
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => handleDeleteRoadmap(roadmap._id, e)}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-all"
+                        title="Delete roadmap"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </motion.button>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Input / Results ─────────────────────────────────────────────── */}
         <AnimatePresence mode="wait">
           {!tasks && (
             <motion.div
@@ -119,24 +297,38 @@ export default function RoadmapsPage() {
                 </button>
               </form>
 
-              {/* Skeleton / Loading State Animation */}
+              {/* Error message */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm"
+                >
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {error}
+                </motion.div>
+              )}
+
+              {/* Loading animation */}
               {isGenerating && (
                 <motion.div
                   initial={{ opacity: 0, y: 0 }}
                   animate={{ opacity: 1, y: 20 }}
-                  className="flex flex-col items-center justify-center space-y-4 text-muted-foreground"
+                  className="flex flex-col items-center justify-center space-y-4 text-muted-foreground mt-8"
                 >
                   <div className="relative">
                     <div className="absolute inset-0 rounded-full blur-md bg-primary/20 animate-pulse" />
                     <Map className="w-12 h-12 text-primary animate-bounce relative z-10" />
                   </div>
-                  <p className="font-medium animate-pulse">Mapping out your journey to become a {role}...</p>
+                  <p className="font-medium animate-pulse">
+                    Mapping out your journey to become a {role}...
+                  </p>
                 </motion.div>
               )}
             </motion.div>
           )}
 
-          {/* Results Section */}
+          {/* ── Roadmap Results ─────────────────────────────────────────── */}
           {tasks && (
             <motion.div
               key="roadmap-results"
@@ -150,16 +342,40 @@ export default function RoadmapsPage() {
                   <Map className="w-6 h-6 text-primary" />
                   Roadmap for {role}
                 </h2>
-                <button
-                  onClick={() => setTasks(null)}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-secondary/50"
-                >
-                  Start Over
-                </button>
+
+                <div className="flex items-center gap-3">
+                  {/* Save progress indicator */}
+                  {isSavingProgress && (
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Saving…
+                    </span>
+                  )}
+
+                  {/* Save progress button (only if we have a DB id) */}
+                  {currentRoadmapId && (
+                    <button
+                      onClick={() => tasks && handleSaveProgress(tasks)}
+                      className="text-sm font-medium text-primary hover:text-primary/80 transition-colors px-4 py-2 rounded-lg hover:bg-primary/10"
+                    >
+                      Save Progress
+                    </button>
+                  )}
+
+                  <button
+                    onClick={handleStartOver}
+                    className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-secondary/50"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Start Over
+                  </button>
+                </div>
               </div>
-              
+
               <div className="flex-1 bg-card/40 backdrop-blur-lg border border-border/50 rounded-2xl shadow-xl overflow-hidden">
-                <Plan initialTasks={tasks} />
+                <Plan
+                  initialTasks={tasks}
+                />
               </div>
             </motion.div>
           )}
