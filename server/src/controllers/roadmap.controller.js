@@ -85,9 +85,10 @@ Rules:
 
       log("INFO", "AI", `OpenRouter responded`, { model, status: response.status });
 
-      if (response.status === 404 || response.status === 429) {
+      // 402 = out of credits, 404 = model unavailable, 429 = rate limited — try next
+      if (response.status === 402 || response.status === 404 || response.status === 429) {
         const errText = await response.text();
-        log("WARN", "AI", `Model unavailable, trying next`, { model, status: response.status });
+        log("WARN", "AI", `Model unavailable or out of credits, trying next`, { model, status: response.status });
         lastError = new Error(`OpenRouter API error ${response.status}: ${errText}`);
         continue;
       }
@@ -139,7 +140,7 @@ Rules:
       return tasks;
 
     } catch (err) {
-      if (err.message.includes("404") || err.message.includes("429")) {
+      if (err.message.includes("402") || err.message.includes("404") || err.message.includes("429")) {
         lastError = err;
         continue;
       }

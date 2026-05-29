@@ -87,7 +87,8 @@ async function callOpenRouter(resumeText: string, jobRole: string) {
 
     console.log(`ℹ️  [analyze] OpenRouter status: ${response.status} (${model})`);
 
-    if (response.status === 404 || response.status === 429) {
+    // 402 = out of credits, 404 = model unavailable, 429 = rate limited — try next
+    if (response.status === 402 || response.status === 404 || response.status === 429) {
       lastError = new Error(`Model ${model} unavailable (${response.status})`);
       console.warn(`⚠️  [analyze] ${lastError.message}, trying next...`);
       continue;

@@ -4,6 +4,7 @@ const app = express();
 const authRouter = require("./routes/auth.routes");
 const roadmapRouter = require("./routes/roadmap.routes");
 const atsRouter = require("./routes/ats.routes");
+const resumeRouter = require("./routes/resume.routes");
 const cors = require("cors");
 
 app.use(express.json());
@@ -21,5 +22,6 @@ app.use(cors({
 app.use('/api/auth', authRouter);
 app.use('/api/roadmap', roadmapRouter);
 app.use('/api/ats', atsRouter);
+app.use('/api/resume', resumeRouter);
 
 module.exports = app;
