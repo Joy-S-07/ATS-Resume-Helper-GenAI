@@ -1,5 +1,7 @@
 const resumeModel = require("../models/resume.model");
 const { extractText } = require("../utils/extractText");
+const { buildResumeHtml } = require("../utils/buildResumeHtml");
+const puppeteer = require("puppeteer");
 
 // ─── OpenRouter config ────────────────────────────────────────────────────────
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -23,31 +25,45 @@ function log(level, context, message, extra = {}) {
 }
 
 /**
- * Generate LaTeX code from structured resume data using AI
+ * Generate ATS-optimised LaTeX from structured resume data.
+ * Uses the resume-tailoring skill principles: truth-preserving optimisation,
+ * keyword alignment, and role-specific emphasis.
  */
-async function generateLatexFromData(resumeData, templateStyle = "modern") {
-  const prompt = `You are an expert LaTeX resume generator. Generate a professional, ATS-friendly LaTeX resume code based on the following data.
+async function generateLatexFromData(resumeData, templateStyle = "modern", targetRole = "") {
+  const roleContext = targetRole
+    ? `The candidate is applying for: "${targetRole}". Tailor the resume specifically for this role — emphasise relevant skills, reframe experience descriptions to match the role's language, and ensure ATS keyword density for this position.`
+    : "Generate a general-purpose professional resume.";
+
+  const prompt = `You are an expert ATS resume writer and LaTeX typesetter following the resume-tailoring principle: truth-preserving optimisation — maximise job fit while maintaining factual integrity. Never fabricate experience, but intelligently reframe and emphasise relevant aspects.
+
+${roleContext}
 
 Template Style: ${templateStyle}
 Resume Data:
 ${JSON.stringify(resumeData, null, 2)}
 
-Requirements:
-1. Use standard LaTeX resume packages (article, fullpage, titlesec, enumitem, hyperref)
-2. Create a clean, professional layout optimized for ATS parsing
-3. Include all provided information in a well-structured format
-4. Use appropriate sections: Contact Info, Summary, Experience, Education, Skills, Languages, References
-5. Make it visually appealing while maintaining ATS compatibility
-6. Return ONLY the LaTeX code, no explanations or markdown formatting
+ATS Optimisation Rules:
+1. Mirror exact keywords and phrases from the target role in bullet points where truthful
+2. Lead every experience bullet with a strong action verb (Engineered, Delivered, Led, Reduced, Increased…)
+3. Quantify achievements wherever data is available (%, $, time saved, team size)
+4. Place the most role-relevant experience bullets first within each position
+5. Include a concise Professional Summary (2-3 sentences) that names the target role and top 3 matching strengths
+6. Skills section must list hard skills first, grouped by category relevant to the role
+7. Keep the document to 1 page if experience < 5 years, 2 pages otherwise
 
-Generate the complete LaTeX document now:`;
+LaTeX Requirements:
+- Use: \\documentclass[letterpaper,11pt]{article} with geometry, enumitem, hyperref, titlesec, xcolor
+- Clean single or two-column layout matching the "${templateStyle}" style
+- ATS-safe: no tables for layout, no text boxes, no graphics — plain text sections only
+- Consistent spacing, readable at 11pt
+- Return ONLY the complete LaTeX source code — no markdown fences, no explanations`;
 
-  const systemContent = "You are an expert LaTeX resume generator. Generate clean, professional, ATS-friendly LaTeX code. Return ONLY the LaTeX code without any markdown formatting or explanations.";
+  const systemContent = "You are an expert ATS resume writer and LaTeX typesetter. Return ONLY raw LaTeX source code. No markdown, no explanations, no code fences.";
 
   let lastError = null;
 
   for (const model of MODELS) {
-    log("INFO", "AI", `Trying model: ${model}`);
+    log("INFO", "AI", `Trying model: ${model}`, { targetRole: targetRole || "none" });
 
     try {
       const response = await fetch(OPENROUTER_API_URL, {
@@ -64,17 +80,16 @@ Generate the complete LaTeX document now:`;
             { role: "system", content: systemContent },
             { role: "user", content: prompt },
           ],
-          temperature: 0.7,
-          max_tokens: 3000,
+          temperature: 0.5,
+          max_tokens: 4096,
         }),
       });
 
       log("INFO", "AI", `OpenRouter responded`, { model, status: response.status });
 
-      // 402 = out of credits, 404 = model unavailable, 429 = rate limited — try next
       if (response.status === 402 || response.status === 404 || response.status === 429) {
         const errText = await response.text();
-        log("WARN", "AI", `Model unavailable or out of credits, trying next`, { model, status: response.status });
+        log("WARN", "AI", `Model unavailable, trying next`, { model, status: response.status });
         lastError = new Error(`OpenRouter API error ${response.status}: ${errText}`);
         continue;
       }
@@ -93,10 +108,13 @@ Generate the complete LaTeX document now:`;
         continue;
       }
 
-      // Strip markdown code blocks if present
-      let latexCode = rawContent.replace(/```latex\n?/g, "").replace(/```\n?/g, "").trim();
+      // Strip any accidental markdown fences
+      const latexCode = rawContent
+        .replace(/^```(?:latex|tex)?\s*/im, "")
+        .replace(/\s*```\s*$/im, "")
+        .trim();
 
-      log("OK", "AI", `LaTeX code generated successfully`, { model, chars: latexCode.length });
+      log("OK", "AI", `LaTeX generated`, { model, chars: latexCode.length, targetRole: targetRole || "none" });
       return latexCode;
 
     } catch (err) {
@@ -246,41 +264,42 @@ async function uploadResumeController(req, res) {
   try {
     const userId = req.user.id;
     const file = req.file;
-    const { templateStyle = "modern" } = req.body;
+    const { templateStyle = "modern", targetRole = "" } = req.body;
 
     if (!file) {
-      console.log("⚠️ WARN [RESUME:UPLOAD] No file provided");
+      log("WARN", "UPLOAD", "No file provided");
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    console.log(`ℹ️ INFO [RESUME:UPLOAD] Extracting text from ${file.originalname}...`);
+    log("INFO", "UPLOAD", `Extracting text from ${file.originalname}`, { targetRole: targetRole || "none" });
     
     // Extract text from uploaded file
     const extractedText = await extractText(file.buffer, file.originalname);
 
     if (!extractedText || extractedText.trim().length < 50) {
-      console.log("⚠️ WARN [RESUME:UPLOAD] Insufficient text extracted");
+      log("WARN", "UPLOAD", "Insufficient text extracted");
       return res.status(400).json({
         message: "Could not extract sufficient text from the file. Please ensure it's a text-based (not scanned) document.",
       });
     }
 
-    console.log(`✅ OK [RESUME:UPLOAD] Extracted ${extractedText.length} characters`);
-    console.log("ℹ️ INFO [RESUME:UPLOAD] Structuring resume data with AI...");
+    log("OK", "UPLOAD", `Extracted ${extractedText.length} characters`);
+    log("INFO", "UPLOAD", "Structuring resume data with AI...");
 
     // Structure the extracted text using AI
     const structuredData = await structureResumeText(extractedText);
 
-    console.log("ℹ️ INFO [RESUME:UPLOAD] Generating LaTeX code...");
+    log("INFO", "UPLOAD", "Generating ATS-optimised LaTeX...", { targetRole: targetRole || "none" });
 
-    // Generate LaTeX code from structured data
-    const latexCode = await generateLatexFromData(structuredData, templateStyle);
+    // Generate LaTeX code from structured data, tailored to target role
+    const latexCode = await generateLatexFromData(structuredData, templateStyle, targetRole);
 
     // Save to database
     const resume = new resumeModel({
       userId,
       source: "upload",
       templateStyle,
+      targetRole,
       resumeData: structuredData,
       latexCode,
       extractedText,
@@ -288,7 +307,7 @@ async function uploadResumeController(req, res) {
 
     await resume.save();
 
-    console.log(`✅ OK [RESUME:UPLOAD] Resume saved successfully (ID: ${resume._id})`);
+    log("OK", "UPLOAD", `Resume saved (ID: ${resume._id})`);
 
     return res.status(201).json({
       message: "Resume uploaded and processed successfully",
@@ -324,34 +343,35 @@ async function uploadResumeController(req, res) {
  * @access Private
  */
 async function generateFromFormController(req, res) {
-  console.log("ℹ️ INFO [RESUME:GENERATE] Generating resume from form data...");
+  log("INFO", "GENERATE", "Generating resume from form data...");
 
   try {
     const userId = req.user.id;
-    const { resumeData, templateStyle = "modern" } = req.body;
+    const { resumeData, templateStyle = "modern", targetRole = "" } = req.body;
 
     if (!resumeData || !resumeData.personalInfo) {
-      console.log("⚠️ WARN [RESUME:GENERATE] Invalid resume data");
+      log("WARN", "GENERATE", "Invalid resume data");
       return res.status(400).json({ message: "Resume data is required" });
     }
 
-    console.log("ℹ️ INFO [RESUME:GENERATE] Generating LaTeX code with AI...");
+    log("INFO", "GENERATE", "Generating ATS-optimised LaTeX...", { targetRole: targetRole || "none" });
 
-    // Generate LaTeX code from form data
-    const latexCode = await generateLatexFromData(resumeData, templateStyle);
+    // Generate LaTeX code tailored to the target role
+    const latexCode = await generateLatexFromData(resumeData, templateStyle, targetRole);
 
     // Save to database
     const resume = new resumeModel({
       userId,
       source: "manual",
       templateStyle,
+      targetRole,
       resumeData,
       latexCode,
     });
 
     await resume.save();
 
-    console.log(`✅ OK [RESUME:GENERATE] Resume generated successfully (ID: ${resume._id})`);
+    log("OK", "GENERATE", `Resume saved (ID: ${resume._id})`, { targetRole: targetRole || "none" });
 
     return res.status(201).json({
       message: "Resume generated successfully",
@@ -531,38 +551,92 @@ async function deleteResumeController(req, res) {
 
 /**
  * @route POST /api/resume/compile
- * @description Compile LaTeX to PDF (placeholder - requires external service or local LaTeX installation)
+ * @description Render resume data to an A4 PDF using Puppeteer + HTML template
  * @access Private
+ * @body { resumeData, targetRole? }
  */
 async function compileLatexController(req, res) {
-  console.log("ℹ️ INFO [RESUME:COMPILE] Compiling LaTeX to PDF...");
+  log("INFO", "COMPILE", "Rendering resume to PDF...");
 
+  let browser;
   try {
-    const { latexCode } = req.body;
+    const { resumeData, targetRole = "" } = req.body;
 
-    if (!latexCode) {
-      console.log("⚠️ WARN [RESUME:COMPILE] No LaTeX code provided");
-      return res.status(400).json({ message: "LaTeX code is required" });
+    if (!resumeData || !resumeData.personalInfo) {
+      log("WARN", "COMPILE", "No resume data provided");
+      return res.status(400).json({ message: "resumeData is required" });
     }
 
-    // TODO: Implement LaTeX compilation
-    // Options:
-    // 1. Use external service like LaTeX.Online API
-    // 2. Use local LaTeX installation with child_process
-    // 3. Return LaTeX for client-side compilation
+    // Build the HTML
+    const html = buildResumeHtml(resumeData, targetRole);
+    log("INFO", "COMPILE", "HTML built, launching Puppeteer...");
 
-    console.log("⚠️ WARN [RESUME:COMPILE] LaTeX compilation not yet implemented");
-
-    return res.status(501).json({
-      message: "LaTeX compilation not yet implemented. Use an external service or download the LaTeX code.",
-      latexCode,
+    browser = await puppeteer.launch({
+      headless: "new",
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
     });
+
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "networkidle0" });
+
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "0", right: "0", bottom: "0", left: "0" },
+    });
+
+    await browser.close();
+    browser = null;
+
+    const name = (resumeData.personalInfo?.name || "resume")
+      .replace(/\s+/g, "_")
+      .replace(/[^a-zA-Z0-9_-]/g, "");
+
+    log("OK", "COMPILE", `PDF generated (${pdfBuffer.length} bytes)`);
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${name}_resume.pdf"`,
+      "Content-Length": pdfBuffer.length,
+    });
+    return res.send(pdfBuffer);
+
   } catch (error) {
-    console.error("❌ ERROR [RESUME:COMPILE]", error.message);
-    return res.status(500).json({
-      message: "Failed to compile LaTeX",
-      error: error.message,
-    });
+    if (browser) {
+      try { await browser.close(); } catch (_) {}
+    }
+    log("ERROR", "COMPILE", error.message);
+    return res.status(500).json({ message: "Failed to generate PDF", error: error.message });
+  }
+}
+
+/**
+ * @route POST /api/resume/upload-photo
+ * @description Upload a profile photo and return its base64 data URL
+ * @access Private
+ */
+async function uploadPhotoController(req, res) {
+  log("INFO", "PHOTO", "Profile photo upload received");
+
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file uploaded" });
+    }
+
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowed.includes(req.file.mimetype)) {
+      return res.status(400).json({ message: "Only JPEG, PNG, WebP, or GIF images are allowed" });
+    }
+
+    const base64 = req.file.buffer.toString("base64");
+    const dataUrl = `data:${req.file.mimetype};base64,${base64}`;
+
+    log("OK", "PHOTO", `Photo encoded (${req.file.size} bytes)`);
+    return res.status(200).json({ photoUrl: dataUrl });
+
+  } catch (error) {
+    log("ERROR", "PHOTO", error.message);
+    return res.status(500).json({ message: "Failed to upload photo", error: error.message });
   }
 }
 
@@ -574,4 +648,5 @@ module.exports = {
   updateResumeController,
   deleteResumeController,
   compileLatexController,
+  uploadPhotoController,
 };

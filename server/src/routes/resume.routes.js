@@ -25,16 +25,47 @@ const upload = multer({
   },
 });
 
+// Image upload filter (for profile photos)
+const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only image files are allowed"));
+  },
+});
+
 /**
  * @route POST /api/resume/upload
- * @description Upload resume file (PDF/DOCX) and generate LaTeX
- * @access Private
  */
 resumeRouter.post(
   "/upload",
   authMiddleware.authUser,
   upload.single("file"),
   resumeController.uploadResumeController
+);
+
+/**
+ * @route POST /api/resume/upload-photo
+ * @description Upload a profile photo, returns base64 data URL
+ * @access Private
+ */
+resumeRouter.post(
+  "/upload-photo",
+  authMiddleware.authUser,
+  imageUpload.single("photo"),
+  resumeController.uploadPhotoController
+);
+
+/**
+ * @route POST /api/resume/compile
+ * @description Render resume to A4 PDF via Puppeteer
+ * @access Private
+ */
+resumeRouter.post(
+  "/compile",
+  authMiddleware.authUser,
+  resumeController.compileLatexController
 );
 
 /**
@@ -90,17 +121,6 @@ resumeRouter.delete(
   "/:id",
   authMiddleware.authUser,
   resumeController.deleteResumeController
-);
-
-/**
- * @route POST /api/resume/compile
- * @description Compile LaTeX to PDF
- * @access Private
- */
-resumeRouter.post(
-  "/compile",
-  authMiddleware.authUser,
-  resumeController.compileLatexController
 );
 
 module.exports = resumeRouter;

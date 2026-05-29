@@ -64,8 +64,12 @@ export default function ResumeBuilderContainer() {
   const [latexCode, setLatexCode] = useState("");
   const [hasGenerated, setHasGenerated] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCompiling, setIsCompiling] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [targetRole, setTargetRole] = useState("");
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const photoInputRef = React.useRef<HTMLInputElement>(null);
   
   const [resumeData, setResumeData] = useState<ResumeData>({
     templateStyle: "modern",
@@ -127,6 +131,7 @@ export default function ResumeBuilderContainer() {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('templateStyle', resumeData.templateStyle);
+      if (targetRole.trim()) formData.append('targetRole', targetRole.trim());
 
       const response = await fetch('/api/resume/upload', {
         method: 'POST',
@@ -188,8 +193,84 @@ export default function ResumeBuilderContainer() {
     }
   };
 
-  const downloadLatex = () => {
-    if (!latexCode) return;
+  const loadFromProfile = async () => {
+    setIsLoadingProfile(true);
+    setUploadError(null);
+    try {
+      const response = await fetch("/api/auth/me", { credentials: "include" });
+      if (!response.ok) throw new Error("Could not load profile. Please ensure you are logged in.");
+      const data = await response.json();
+      const user = data.user || data;
+      setResumeData((prev) => ({
+        ...prev,
+        personalInfo: {
+          ...prev.personalInfo,
+          name: user.username || user.name || prev.personalInfo.name,
+          email: user.email || prev.personalInfo.email,
+          phone: user.phone || prev.personalInfo.phone,
+          address: user.address || prev.personalInfo.address,
+          title: user.title || prev.personalInfo.title,
+        },
+      }));
+    } catch (err: any) {
+      setUploadError(err.message || "Failed to load profile data.");
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("photo", file);
+    try {
+      const res = await fetch("/api/resume/upload-photo", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Photo upload failed");
+      setResumeData((prev) => ({ ...prev, profilePhoto: data.photoUrl }));
+    } catch (err: any) {
+      setUploadError(err.message);
+    } finally {
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  };
+
+  const downloadPdf = async () => {
+    if (!hasGenerated) return;
+    setIsCompiling(true);
+    setUploadError(null);
+    try {
+      const res = await fetch("/api/resume/compile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeData, targetRole: targetRole.trim() }),
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.message || "PDF generation failed");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const name = resumeData.personalInfo.name?.replace(/\s+/g, "_") || "resume";
+      a.href = url;
+      a.download = `${name}_resume.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setUploadError(err.message || "Failed to generate PDF");
+    } finally {
+      setIsCompiling(false);
+    }
+  };
+
+  const downloadLatex = () => {    if (!latexCode) return;
     const name = resumeData.personalInfo.name?.replace(/\s+/g, "_") || "resume";
     const blob = new Blob([latexCode], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -212,7 +293,8 @@ export default function ResumeBuilderContainer() {
         },
         body: JSON.stringify({
           resumeData,
-          templateStyle: resumeData.templateStyle
+          templateStyle: resumeData.templateStyle,
+          targetRole: targetRole.trim(),
         }),
         credentials: 'include'
       });
@@ -246,14 +328,27 @@ export default function ResumeBuilderContainer() {
           <h1 className="text-xl font-bold text-white tracking-tight">ATS Resume Builder</h1>
         </div>
         
-        <button
-          onClick={downloadLatex}
-          disabled={!hasGenerated}
-          className="px-6 py-2.5 bg-white text-black font-medium rounded-xl hover:bg-gray-200 transition-all flex items-center gap-2 shadow-lg shadow-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <Download className="w-4 h-4" />
-          Download .tex
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={downloadLatex}
+            disabled={!hasGenerated}
+            className="px-4 py-2.5 bg-white/10 border border-white/20 text-white font-medium rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+          >
+            <Code className="w-4 h-4" />
+            .tex
+          </button>
+          <button
+            onClick={downloadPdf}
+            disabled={!hasGenerated || isCompiling}
+            className="px-6 py-2.5 bg-white text-black font-medium rounded-xl hover:bg-gray-200 transition-all flex items-center gap-2 shadow-lg shadow-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isCompiling ? (
+              <><div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" /> Generating PDF...</>
+            ) : (
+              <><Download className="w-4 h-4" /> Download PDF</>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Main Content Grid */}
@@ -315,6 +410,20 @@ export default function ResumeBuilderContainer() {
                     onChange={handleFileUpload}
                     className="hidden"
                   />
+
+                  {/* Target Role input */}
+                  <div className="w-full max-w-md mb-4">
+                    <label className="block text-xs font-semibold text-slate-300 mb-2">
+                      Target Role <span className="text-slate-500 font-normal">(optional — for ATS optimisation)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={targetRole}
+                      onChange={(e) => setTargetRole(e.target.value)}
+                      placeholder="e.g. Senior Frontend Engineer at Stripe"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-all text-sm"
+                    />
+                  </div>
                   
                   {/* Upload area */}
                   <div 
@@ -367,6 +476,40 @@ export default function ResumeBuilderContainer() {
                     <p className="text-sm text-slate-400">Fill in your details to generate your professional resume</p>
                   </div>
 
+                  {/* Target Role + Load from Profile */}
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-white flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                        Target Role for ATS Optimisation
+                      </label>
+                      <button
+                        onClick={loadFromProfile}
+                        disabled={isLoadingProfile}
+                        className="px-3 py-1.5 bg-white/10 border border-white/20 text-white text-xs font-medium rounded-lg hover:bg-white/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {isLoadingProfile ? (
+                          <div className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <User className="w-3.5 h-3.5" />
+                        )}
+                        Load from Profile
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={targetRole}
+                      onChange={(e) => setTargetRole(e.target.value)}
+                      placeholder="e.g. Senior Frontend Engineer at Stripe"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-white/50 focus:bg-white/10 transition-all text-sm"
+                    />
+                    {targetRole.trim() && (
+                      <p className="text-xs text-yellow-400/80">
+                        ✦ AI will tailor your resume specifically for this role
+                      </p>
+                    )}
+                  </div>
+
                   {/* Choose Template Style */}
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
@@ -398,14 +541,38 @@ export default function ResumeBuilderContainer() {
                   {/* Profile Photo */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-white">Profile Photo <span className="text-slate-500 font-normal">(optional)</span></h3>
-                    <div className="w-full border-2 border-dashed border-white/20 rounded-2xl p-8 hover:border-white/50 hover:bg-white/5 transition-all cursor-pointer flex flex-col items-center justify-center gap-3">
-                      <div className="p-3 bg-white/5 rounded-full">
-                        <Upload className="w-6 h-6 text-slate-400" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm text-slate-300 font-medium">Click to upload profile photo</p>
-                        <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 5MB</p>
-                      </div>
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                    <div
+                      onClick={() => photoInputRef.current?.click()}
+                      className="w-full border-2 border-dashed border-white/20 rounded-2xl p-8 hover:border-white/50 hover:bg-white/5 transition-all cursor-pointer flex flex-col items-center justify-center gap-3"
+                    >
+                      {resumeData.profilePhoto ? (
+                        <div className="flex flex-col items-center gap-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={resumeData.profilePhoto}
+                            alt="Profile"
+                            className="w-20 h-20 rounded-full object-cover border-2 border-white/20"
+                          />
+                          <p className="text-xs text-slate-400">Click to change photo</p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="p-3 bg-white/5 rounded-full">
+                            <Upload className="w-6 h-6 text-slate-400" />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm text-slate-300 font-medium">Click to upload profile photo</p>
+                            <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 5MB</p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -613,9 +780,16 @@ export default function ResumeBuilderContainer() {
                       </div>
                     </div>
                     
-                    <button className="px-3 py-1.5 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-all text-sm font-medium flex items-center gap-2">
-                      <Eye className="w-4 h-4" />
-                      Compile
+                    <button
+                      onClick={downloadPdf}
+                      disabled={isCompiling}
+                      className="px-3 py-1.5 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-all text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isCompiling ? (
+                        <><div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> Generating...</>
+                      ) : (
+                        <><Eye className="w-4 h-4" /> Compile to PDF</>
+                      )}
                     </button>
                   </div>
                   
@@ -645,13 +819,27 @@ export default function ResumeBuilderContainer() {
               <p className="text-xs text-slate-400 mt-0.5">{resumeData.templateStyle.charAt(0).toUpperCase() + resumeData.templateStyle.slice(1)} style</p>
             </div>
             {hasGenerated && (
-              <button
-                onClick={downloadLatex}
-                className="px-3 py-1.5 bg-white/10 border border-white/20 text-white text-xs font-medium rounded-lg hover:bg-white/20 transition-all flex items-center gap-1.5"
-              >
-                <Download className="w-3.5 h-3.5" />
-                .tex
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={downloadLatex}
+                  className="px-2.5 py-1.5 bg-white/10 border border-white/20 text-white text-xs font-medium rounded-lg hover:bg-white/20 transition-all flex items-center gap-1.5"
+                >
+                  <Code className="w-3.5 h-3.5" />
+                  .tex
+                </button>
+                <button
+                  onClick={downloadPdf}
+                  disabled={isCompiling}
+                  className="px-2.5 py-1.5 bg-white text-black text-xs font-medium rounded-lg hover:bg-gray-200 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {isCompiling ? (
+                    <div className="w-3 h-3 border border-black/20 border-t-black rounded-full animate-spin" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5" />
+                  )}
+                  PDF
+                </button>
+              </div>
             )}
           </div>
           

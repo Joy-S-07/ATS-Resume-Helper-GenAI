@@ -27,6 +27,12 @@ const resumeSchema = new mongoose.Schema(
       default: "modern",
     },
 
+    // Target role for ATS optimisation (e.g. "Senior Frontend Engineer at Stripe")
+    targetRole: {
+      type: String,
+      default: "",
+    },
+
     // Structured resume data
     resumeData: {
       profilePhoto: String,
