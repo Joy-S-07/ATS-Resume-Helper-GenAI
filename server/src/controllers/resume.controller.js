@@ -572,17 +572,27 @@ async function compileLatexController(req, res) {
     log("INFO", "COMPILE", "HTML built, launching Puppeteer...");
 
     browser = await puppeteer.launch({
-      headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+      headless: true,   // "new" deadlocks on Windows — use legacy headless mode
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-web-security",
+        "--allow-file-access-from-files",
+      ],
     });
 
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    // domcontentloaded is safe for data: URLs; networkidle0 can hang
+    await page.setContent(html, { waitUntil: "domcontentloaded" });
+    // Let fonts/layout settle
+    await new Promise((r) => setTimeout(r, 400));
 
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: { top: "0", right: "0", bottom: "0", left: "0" },
+      margin: { top: "0mm", right: "0mm", bottom: "0mm", left: "0mm" },
     });
 
     await browser.close();
@@ -594,10 +604,10 @@ async function compileLatexController(req, res) {
 
     log("OK", "COMPILE", `PDF generated (${pdfBuffer.length} bytes)`);
 
+    // Do NOT set Content-Length manually — Express calculates it correctly
     res.set({
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${name}_resume.pdf"`,
-      "Content-Length": pdfBuffer.length,
     });
     return res.send(pdfBuffer);
 
