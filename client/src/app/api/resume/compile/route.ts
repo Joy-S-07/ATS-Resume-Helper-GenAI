@@ -35,22 +35,23 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Read as Uint8Array — preserves every byte without any encoding conversion
-    const bytes = new Uint8Array(await upstream.arrayBuffer());
-
     const name = (body?.resumeData?.personalInfo?.name || "resume")
       .replace(/\s+/g, "_")
       .replace(/[^a-zA-Z0-9_-]/g, "");
 
-    console.log(`✅ [RESUME:PROXY] Streaming PDF (${bytes.byteLength} bytes)`);
+    const contentDisposition =
+      upstream.headers.get("Content-Disposition") ||
+      `attachment; filename="${name}_resume.pdf"`;
 
-    // Use the native Web API Response — Next.js passes Uint8Array through untouched
-    return new Response(bytes, {
+    console.log(`✅ [RESUME:PROXY] Piping PDF stream to client`);
+
+    // Pipe the ReadableStream directly — never buffer in the proxy so Next.js
+    // cannot re-encode the binary body on the way out.
+    return new Response(upstream.body, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${name}_resume.pdf"`,
-        // No Content-Length — let the runtime set it correctly
+        "Content-Disposition": contentDisposition,
       },
     });
   } catch (error: any) {

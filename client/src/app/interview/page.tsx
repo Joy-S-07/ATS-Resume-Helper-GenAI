@@ -230,18 +230,40 @@ export default function AIInterviewPage() {
     };
 
     recognitionRef.current.onerror = (e: any) => {
-      // "no-speech" is not a real error — just silence, keep listening
-      if (e.error === "no-speech") return;
+      // Recoverable errors — reset transcript state, abort and restart after a short delay
+      if (e.error === "no-speech" || e.error === "network") {
+        finalTranscriptRef.current = "";
+        setInterimText("");
+        try {
+          recognitionRef.current?.abort();
+          setTimeout(() => {
+            if (!intentionalStopRef.current) {
+              recognitionRef.current?.start();
+            }
+          }, 300);
+        } catch {}
+        return;
+      }
+      // Unrecoverable errors — stop mic
       console.warn("Speech recognition error:", e.error);
       setMicState("idle");
+      setInterimText("");
     };
 
     recognitionRef.current.onend = () => {
-      // If we stopped intentionally (user tapped mic), don't reset — stopAndSubmit handles it
+      // Intentional stop — stopAndSubmit handles the state
       if (intentionalStopRef.current) return;
-      // Otherwise recognition ended on its own (timeout/error) — reset to idle
-      setMicState("idle");
-      setInterimText("");
+
+      // Unintentional end — restart after a short delay to keep listening
+      setTimeout(() => {
+        if (!intentionalStopRef.current) {
+          try {
+            recognitionRef.current?.start();
+          } catch {
+            // Already started — ignore
+          }
+        }
+      }, 300);
     };
 
     try {
@@ -260,12 +282,15 @@ export default function AIInterviewPage() {
     finalTranscriptRef.current = "";
     setInterimText("");
 
-    if (text) {
+    if (text && text.length > 2) {
       handleUserAnswer(text);
     } else {
+      // Nothing was captured — ask user to repeat
       setMicState("idle");
+      setInterimText("");
+      addAiMessage("I'm sorry, I couldn't hear that clearly. Could you please repeat your answer?");
     }
-  }, [interimText, handleUserAnswer]);
+  }, [interimText, handleUserAnswer, addAiMessage]);
 
   const handleMicClick = () => {
     if (micState === "processing") return;

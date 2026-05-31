@@ -2,17 +2,10 @@
 
 import React, { useState } from "react";
 import { 
-  ArrowLeft, 
   Upload, 
   FileText, 
   User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Briefcase, 
-  GraduationCap,
   Code,
-  Award,
   Plus,
   Trash2,
   Download,
@@ -20,8 +13,6 @@ import {
   Sparkles,
   Layout
 } from "lucide-react";
-import Link from "next/link";
-import ROUTES from "@/routes";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ResumeData {
@@ -66,6 +57,7 @@ export default function ResumeBuilderContainer() {
   const [isUploading, setIsUploading] = useState(false);
   const [isCompiling, setIsCompiling] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [targetRole, setTargetRole] = useState("");
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -244,8 +236,9 @@ export default function ResumeBuilderContainer() {
     if (!hasGenerated) return;
     setIsCompiling(true);
     setUploadError(null);
+    setSuccessMessage(null);
     try {
-      const res = await fetch("/api/resume/compile", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/resume/compile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeData, targetRole: targetRole.trim() }),
@@ -253,18 +246,23 @@ export default function ResumeBuilderContainer() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.message || "PDF generation failed");
+        throw new Error(d.message || "The server failed to generate the PDF. Please try again.");
       }
-      const blob = await res.blob();
+      const arrayBuffer = await res.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       const name = resumeData.personalInfo.name?.replace(/\s+/g, "_") || "resume";
       a.href = url;
       a.download = `${name}_resume.pdf`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      setSuccessMessage("PDF downloaded successfully!");
+      setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: any) {
-      setUploadError(err.message || "Failed to generate PDF");
+      setUploadError(err.message || "Failed to generate PDF. Please try again.");
     } finally {
       setIsCompiling(false);
     }
@@ -329,6 +327,11 @@ export default function ResumeBuilderContainer() {
         </div>
         
         <div className="flex items-center gap-2">
+          {successMessage && (
+            <span className="text-sm text-emerald-400 font-medium px-3 py-1.5 bg-emerald-400/10 border border-emerald-400/20 rounded-lg">
+              ✓ {successMessage}
+            </span>
+          )}
           <button
             onClick={downloadLatex}
             disabled={!hasGenerated}

@@ -589,11 +589,15 @@ async function compileLatexController(req, res) {
     // Let fonts/layout settle
     await new Promise((r) => setTimeout(r, 400));
 
-    const pdfBuffer = await page.pdf({
+    const pdfRaw = await page.pdf({
       format: "A4",
       printBackground: true,
       margin: { top: "0mm", right: "0mm", bottom: "0mm", left: "0mm" },
     });
+
+    // Puppeteer v22+ returns Uint8Array instead of Buffer.
+    // Express res.send() serializes Uint8Array as JSON {"0":37,...} — convert to Buffer first.
+    const pdfBuffer = Buffer.from(pdfRaw);
 
     await browser.close();
     browser = null;
@@ -609,6 +613,7 @@ async function compileLatexController(req, res) {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${name}_resume.pdf"`,
     });
+
     return res.send(pdfBuffer);
 
   } catch (error) {
